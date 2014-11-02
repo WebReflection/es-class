@@ -121,5 +121,18 @@ wru.test([
       wru.assert(Rectangle.SHAPE === 'Rectangle');
       wru.assert(Square.SHAPE === 'Square');
     }
+  }, {
+    name: 'extending objects',
+    test: function () {
+      var a = {a: 1};
+      var B = Class({
+        'extends': a,
+        b: 2
+      });
+      wru.assert((new B).a === 1);
+      wru.assert((new B).b === 2);
+      wru.assert(B.a === undefined);
+      wru.assert(a.b === undefined);
+    }
   }
 ]);
