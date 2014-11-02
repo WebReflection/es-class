@@ -5,7 +5,7 @@ es-class
 
 
 ### Simple, semantic, and lightweight
-This basic tool to define classes fits in few bytes (~570) bringing a semantic and elegant way to define cross platform all classes you need.
+This basic tool to define classes fits in few bytes (~570) bringing a semantic and elegant way to define [cross platform](http://webreflection.github.io/es-class/test) all classes you need.
 ```js
 var Rectangle = new Class({
   constructor: function Rectangle(width, height) {
@@ -72,4 +72,15 @@ It will result in the following, once minified, using both closure compiler and 
 ```js
 var A=Class({"static":{A:"a"}}),B=Class({"extends":A});
 ```
-No build task? Simply wrap them in quotes, or simply `output.repalce(/\b(extends|static)\b(\s*:)/, "'$1'$2")` before a production deploy in case ES3 compatible browsers are part of your targets ( mostly IE8 and lower, nothing to worry about for IE9 or modern engines, including nodejs and other server side related ).
+No build task? Simply wrap them in quote as done in the [test file](test/es-class.js).
+
+However, this is mostly IE8 and lower only issue, nothing to worry about for IE9 and modern engines, including nodejs and others.
+
+### F.A.Q.
+
+#### is it safe to use protected keywords ?
+In this ES5 compatible age all keywords are not protected anymore. `weakMap.delete(object)` is a basic example where protected keyword as `delete` is can be used without problems indeed. However, as specified in the previous chapter, all modern minifiers will take care of these names wrapping them in quotes so that no engine will fail but your source code will still look awesome.
+
+
+#### but why using protected keywords ?
+Your editor will most likely syntax highlight both `extends` and `static` so that you can easily and instantly spot them. It's actually a help for you writing code, no special highlight? It's mispelled! Has special highlights? Quickly find them while scrolling and read what these classes do and from where.
