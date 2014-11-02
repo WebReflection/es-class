@@ -13,19 +13,19 @@ wru.test([
     test: function () {
       var A = Class({
         constructor: function A() {
-          wru.assert(this.constructor === A);
+          wru.assert('A#constructor === A', this.constructor === A);
         }
       });
       var B = Class({
         'extends': A,
         constructor: function () {
-          wru.assert(this.constructor === B);
+          wru.assert('B#constructor === B', this.constructor === B);
         }
       });
       var C = Class({});
       new A;
       new B;
-      wru.assert((new C).constructor === C);
+      wru.assert('C#constructor === C', (new C).constructor === C);
     }
   }, {
     name: 'extends',
