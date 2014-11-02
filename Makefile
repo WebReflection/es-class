@@ -22,8 +22,8 @@ build:
 	make node
 	make amd
 	make test
-#	make hint
 	make size
+	make hint
 
 # build generic version
 var:

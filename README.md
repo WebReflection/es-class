@@ -5,7 +5,7 @@ es-class
 
 
 ### Simple, semantic, and lightweight
-This basic tool to define classes fits in few bytes (~580) bringing a semantic and elegant way to define [cross platform](http://webreflection.github.io/es-class/test) all classes you need.
+This basic tool to define classes fits in few bytes (~574) bringing a semantic and elegant way to define [cross platform](http://webreflection.github.io/es-class/test) all classes you need.
 ```js
 var Rectangle = new Class({
   constructor: function Rectangle(width, height) {
