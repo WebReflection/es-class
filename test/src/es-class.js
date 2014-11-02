@@ -10,8 +10,7 @@ var Class = Class || (function (Object) {
     PROTOTYPE = 'prototype',
     STATIC = 'static',
 
-    // IE only bug
-    // used to copy non enumerable properties
+    // used to copy non enumerable properties on IE
     nonEnumerables = [
       CONSTRUCTOR,
       'hasOwnProperty',
@@ -22,18 +21,23 @@ var Class = Class || (function (Object) {
       'valueOf'
     ],
 
-    hasEnumerableBug = !{valueOf:0}[nonEnumerables[3]](nonEnumerables[6]),
+    // IE < 9 bug only
+    hasIEEnumerableBug = !{valueOf:0}[nonEnumerables[3]](nonEnumerables[6]),
+
+    // Blackberry 7 and old WebKit bug only:
+    //  user defined functions have enumerable prototype and constructor
+    hasNotBB7EnumerableBug = !setProperty[nonEnumerables[3]](PROTOTYPE),
 
     hOP = Object[nonEnumerables[1]],
 
     // basic ad-hoc private fallback for old browsers
     // use es5-shim if you want a properly patched Object.create polyfill
-    create = Object.create || function (proto, descriptors) {
+    create = Object.create || function (proto) {
       /*jshint newcap: false */
-      return (create[PROTOTYPE] = proto) ?
-        new create(null, descriptors) :
-        (this[CONSTRUCTOR] = descriptors[CONSTRUCTOR].value) && this
-      ;
+      create[PROTOTYPE] = proto;
+      var object = new create();
+      create[PROTOTYPE] = null;
+      return object;
     },
     defineProperty = Object.defineProperty
   ;
@@ -44,6 +48,7 @@ var Class = Class || (function (Object) {
   } catch(o_O) {
     defineProperty = function (object, name, descriptor) {
       object[name] = descriptor.value;
+      return object;
     };
   }
 
@@ -52,11 +57,14 @@ var Class = Class || (function (Object) {
   function copyEnumerables(source, target, makeEnumerable) {
     var key, i;
     for (key in source) {
-      if (hOP.call(source, key)) {
+      if (
+        hOP.call(source, key) &&
+        (hasNotBB7EnumerableBug || (key !== PROTOTYPE))
+      ) {
         setProperty(target, key, source[key], makeEnumerable);
       }
     }
-    if (hasEnumerableBug) {
+    if (hasIEEnumerableBug) {
       for (i = 0; i < nonEnumerables.length; i++) {
         key = nonEnumerables[i];
         if (hOP.call(source, key)) {
@@ -68,7 +76,7 @@ var Class = Class || (function (Object) {
 
   // set a property via defineProperty using a common descriptor
   function setProperty(target, key, value, makeEnumerable) {
-    defineProperty(target, key, {
+    return defineProperty(target, key, {
       enumerable: makeEnumerable,
       configurable: true,
       writable: true,
@@ -77,24 +85,22 @@ var Class = Class || (function (Object) {
   }
 
   // Class({ ... })
-  function Class(description) {
+  return function (description) {
     var
-      constructor = hOP.call(description, CONSTRUCTOR) ?
+      hasConstructor = hOP.call(description, CONSTRUCTOR),
+      constructor = hasConstructor ?
         description[CONSTRUCTOR] : function Class() {},
       hasParent = hOP.call(description, EXTENDS),
       parent = hasParent && description[EXTENDS],
       inherits = hasParent && typeof parent === 'function' ?
         parent[PROTOTYPE] : parent,
       prototype = hasParent ?
-        create(inherits, {
-          constructor: {
-            configurable: true,
-            writable: true,
-            value: constructor
-          }
-        }) :
+        setProperty(create(inherits), CONSTRUCTOR, constructor, false) :
         constructor[PROTOTYPE]
     ;
+    if (hasConstructor) {
+      delete description[CONSTRUCTOR];
+    }
     if (hasParent) {
       // in case it's a function
       if (parent !== inherits) {
@@ -112,8 +118,6 @@ var Class = Class || (function (Object) {
     // enrich the prototype
     copyEnumerables(description, prototype, false);
     return constructor;
-  }
-
-  return Class;
+  };
 
 }(Object));
