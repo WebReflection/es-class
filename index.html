@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <meta name="viewport" content="width=640">
+
+    <link rel="stylesheet" href="stylesheets/core.css" media="screen">
+    <link rel="stylesheet" href="stylesheets/mobile.css" media="handheld, only screen and (max-device-width:640px)">
+    <link rel="stylesheet" href="stylesheets/pygment_trac.css">
+
+    <script type="text/javascript" src="javascripts/modernizr.js"></script>
+    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+    <script type="text/javascript" src="javascripts/headsmart.min.js"></script>
+    <script type="text/javascript">
+      $(document).ready(function () {
+        $('#main_content').headsmart()
+      })
+    </script>
+    <title>Es-class by WebReflection</title>
+  </head>
+
+  <body>
+    <a id="forkme_banner" href="https://github.com/WebReflection/es-class">View on GitHub</a>
+    <div class="shell">
+
+      <header>
+        <span class="ribbon-outer">
+          <span class="ribbon-inner">
+            <h1>Es-class</h1>
+            <h2>ECMAScript 3 to 6 compatible Class definition</h2>
+          </span>
+          <span class="left-tail"></span>
+          <span class="right-tail"></span>
+        </span>
+      </header>
+
+      <section id="downloads">
+        <span class="inner">
+          <a href="https://github.com/WebReflection/es-class/zipball/master" class="zip"><em>download</em> .ZIP</a><a href="https://github.com/WebReflection/es-class/tarball/master" class="tgz"><em>download</em> .TGZ</a>
+        </span>
+      </section>
+
+
+      <span class="banner-fix"></span>
+
+
+      <section id="main_content">
+        <h1>
+<a name="es-class" class="anchor" href="#es-class"><span class="octicon octicon-link"></span></a>es-class</h1>
+
+<p><a href="http://travis-ci.org/WebReflection/es-class"><img src="https://secure.travis-ci.org/WebReflection/es-class.png" alt="build status"></a></p>
+
+<h3>
+<a name="simple-semantic-and-lightweight" class="anchor" href="#simple-semantic-and-lightweight"><span class="octicon octicon-link"></span></a>Simple, semantic, and lightweight</h3>
+
+<p>This basic tool to define classes fits in few bytes (~570) bringing a semantic and elegant way to define <a href="http://webreflection.github.io/es-class/test">cross platform</a> all classes you need.</p>
+
+<div class="highlight highlight-js"><pre><span class="kd">var</span> <span class="nx">Rectangle</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Class</span><span class="p">({</span>
+  <span class="nx">constructor</span><span class="o">:</span> <span class="kd">function</span> <span class="nx">Rectangle</span><span class="p">(</span><span class="nx">width</span><span class="p">,</span> <span class="nx">height</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">width</span> <span class="o">=</span> <span class="nx">width</span><span class="p">;</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">height</span> <span class="o">=</span> <span class="nx">height</span><span class="p">;</span>
+  <span class="p">}</span>
+<span class="p">});</span>
+
+<span class="kd">var</span> <span class="nx">Square</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Class</span><span class="p">({</span>
+  <span class="kr">extends</span><span class="o">:</span> <span class="nx">Rectangle</span><span class="p">,</span>
+  <span class="nx">constructor</span><span class="o">:</span> <span class="kd">function</span> <span class="nx">Square</span><span class="p">(</span><span class="nx">width</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nx">Rectangle</span><span class="p">.</span><span class="nx">call</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="nx">width</span><span class="p">,</span> <span class="nx">width</span><span class="p">);</span>
+  <span class="p">}</span>
+<span class="p">});</span>
+</pre></div>
+
+<p>Beside <code>extends</code> there is only one extra property: <code>static</code>.</p>
+
+<p>Such property is used to define all static properties <strong>only</strong> on the constructor, avoiding interferences with instances, still preserving inheritance within constructors statics.</p>
+
+<p>In case it's needed, it is possible to define both statics and properties without problems.</p>
+
+<div class="highlight highlight-js"><pre><span class="kd">var</span> <span class="nx">Rectangle</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Class</span><span class="p">({</span>
+  <span class="kr">static</span><span class="o">:</span> <span class="p">{</span>
+    <span class="nx">SHAPE</span><span class="o">:</span> <span class="s1">'Rectangle'</span>
+  <span class="p">},</span>
+  <span class="nx">constructor</span><span class="o">:</span> <span class="kd">function</span> <span class="nx">Rectangle</span><span class="p">(</span><span class="nx">width</span><span class="p">,</span> <span class="nx">height</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">width</span> <span class="o">=</span> <span class="nx">width</span><span class="p">;</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">height</span> <span class="o">=</span> <span class="nx">height</span><span class="p">;</span>
+  <span class="p">},</span>
+  <span class="c1">// in case you need a property</span>
+  <span class="c1">// with same value or even a different one</span>
+  <span class="nx">SHAPE</span><span class="o">:</span> <span class="s1">'RectangleInstance'</span>
+<span class="p">});</span>
+
+<span class="kd">var</span> <span class="nx">r10x20</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Rectangle</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">20</span><span class="p">);</span>
+<span class="nx">r10x20</span><span class="p">.</span><span class="nx">SHAPE</span><span class="p">;</span>     <span class="c1">// RectangleInstance</span>
+<span class="nx">Rectangle</span><span class="p">.</span><span class="nx">SHAPE</span><span class="p">;</span>  <span class="c1">// Rectangle</span>
+</pre></div>
+
+<h4>
+<a name="minimal-convenience-for-common-daily-tasks" class="anchor" href="#minimal-convenience-for-common-daily-tasks"><span class="octicon octicon-link"></span></a>Minimal convenience for common daily tasks</h4>
+
+<p>There is no black magic behind any of <code>es-class</code> behaviors, what you see is what you get.</p>
+
+<p>No magic <code>superClass</code> or <code>sup</code>, no magic wraps whatsoever, you explicitly invoke what you need when and if you need.</p>
+
+<h3>
+<a name="es3-friendly-via-es5-compatible-syntax" class="anchor" href="#es3-friendly-via-es5-compatible-syntax"><span class="octicon octicon-link"></span></a>ES3 friendly via ES5 compatible syntax</h3>
+
+<p>Regardless the usage of reserved keywords such <code>extends</code> or <code>static</code>, every modern <em>minifier</em> will take care of stringifying them, same way it would do with <code>delete</code> properties when, as example, <code>Map</code> or <code>WeakMap</code> ES6 collections are in place.</p>
+
+<p>Take this code as example:</p>
+
+<div class="highlight highlight-js"><pre><span class="kd">var</span> <span class="nx">A</span> <span class="o">=</span> <span class="nx">Class</span><span class="p">({</span>
+  <span class="kr">static</span><span class="o">:</span> <span class="p">{</span>
+    <span class="nx">A</span><span class="o">:</span> <span class="s1">'a'</span>
+  <span class="p">}</span>
+<span class="p">});</span>
+<span class="kd">var</span> <span class="nx">B</span> <span class="o">=</span> <span class="nx">Class</span><span class="p">({</span>
+  <span class="kr">extends</span><span class="o">:</span> <span class="nx">A</span>
+<span class="p">});</span>
+</pre></div>
+
+<p>It will result in the following, once minified, using both closure compiler and uglify JS:</p>
+
+<div class="highlight highlight-js"><pre><span class="kd">var</span> <span class="nx">A</span><span class="o">=</span><span class="nx">Class</span><span class="p">({</span><span class="s2">"static"</span><span class="o">:</span><span class="p">{</span><span class="nx">A</span><span class="o">:</span><span class="s2">"a"</span><span class="p">}}),</span><span class="nx">B</span><span class="o">=</span><span class="nx">Class</span><span class="p">({</span><span class="s2">"extends"</span><span class="o">:</span><span class="nx">A</span><span class="p">});</span>
+</pre></div>
+
+<p>No build task? Simply wrap them in quote as done in the <a href="test/es-class.js">test file</a>.</p>
+
+<p>However, this is mostly IE8 and lower only issue, nothing to worry about for IE9 and modern engines, including nodejs and others.</p>
+
+<h3>
+<a name="faq" class="anchor" href="#faq"><span class="octicon octicon-link"></span></a>F.A.Q.</h3>
+
+<h4>
+<a name="is-it-safe-to-use-protected-keywords-" class="anchor" href="#is-it-safe-to-use-protected-keywords-"><span class="octicon octicon-link"></span></a>is it safe to use protected keywords ?</h4>
+
+<p>In this ES5 compatible age all keywords are not protected anymore. <code>weakMap.delete(object)</code> is a basic example where protected keyword as <code>delete</code> is can be used without problems indeed. However, as specified in the previous chapter, all modern minifiers will take care of these names wrapping them in quotes so that no engine will fail but your source code will still look awesome.</p>
+
+<h4>
+<a name="but-why-using-protected-keywords-" class="anchor" href="#but-why-using-protected-keywords-"><span class="octicon octicon-link"></span></a>but why using protected keywords ?</h4>
+
+<p>Your editor will most likely syntax highlight both <code>extends</code> and <code>static</code> so that you can easily and instantly spot them. It's actually a help for you writing code, no special highlight? It's mispelled! Has special highlights? Quickly find them while scrolling and read what these classes do and from where.</p>
+      </section>
+
+      <footer>
+        <span class="ribbon-outer">
+          <span class="ribbon-inner">
+            <p>this project by <a href="https://github.com/WebReflection">WebReflection</a> can be found on <a href="https://github.com/WebReflection/es-class">GitHub</a></p>
+          </span>
+          <span class="left-tail"></span>
+          <span class="right-tail"></span>
+        </span>
+        <p>Generated with <a href="http://pages.github.com">GitHub Pages</a> using Merlot</p>
+        <span class="octocat"></span>
+      </footer>
+
+    </div>
+
+    
+  </body>
+</html>
