@@ -90,5 +90,36 @@ wru.test([
       });
       wru.assert(('' + new A) === 'a');
     }
+  }, {
+    name: 'static and property',
+    test: function () {
+      var Rectangle = new Class({
+        'static': {
+          SHAPE: 'Rectangle'
+        },
+        constructor: function Rectangle(width, height) {
+          this.width = width;
+          this.height = height;
+        },
+        SHAPE: 'RectangleInstance'
+      });
+
+      var r10x20 = new Rectangle(10, 20);
+      wru.assert(r10x20.SHAPE === 'RectangleInstance');
+      wru.assert(Rectangle.SHAPE === 'Rectangle');
+    }
+  }, {
+    name: 'static override',
+    test: function () {
+      var Rectangle = new Class({
+        'static': {SHAPE: 'Rectangle'}
+      });
+      var Square = new Class({
+        'extends': Rectangle,
+        'static': {SHAPE: 'Square'}
+      });
+      wru.assert(Rectangle.SHAPE === 'Rectangle');
+      wru.assert(Square.SHAPE === 'Square');
+    }
   }
 ]);
