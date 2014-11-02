@@ -68,18 +68,18 @@ var B = Class({
   extends: A
 });
 ```
-It will result in the following, once minified, using both closure compiler and uglify JS:
+It will result in the following, once minified, using both closure compiler or uglify JS:
 ```js
 var A=Class({"static":{A:"a"}}),B=Class({"extends":A});
 ```
-No build task? Simply wrap them in quote as done in the [test file](test/es-class.js).
+No build task? Just wrap them in quotes as done in the [test file](test/es-class.js).
 
 However, this is mostly IE8 and lower only issue, nothing to worry about for IE9 and modern engines, including nodejs and others.
 
 ### F.A.Q.
 
 #### is it safe to use protected keywords ?
-In this ES5 compatible age all keywords are not protected anymore. `weakMap.delete(object)` is a basic example where protected keyword as `delete` is can be used without problems indeed. However, as specified in the previous chapter, all modern minifiers will take care of these names wrapping them in quotes so that no engine will fail but your source code will still look awesome.
+In this ES5 compatible age all keywords are not protected anymore. `weakMap.delete(object)` is a basic example where protected keywords, as `delete` is, can be used without problems indeed. However, as specified in the previous chapter, all modern minifiers will take care of these names wrapping them in quotes so that no engine will fail but your source code will still look awesome.
 
 
 #### but why using protected keywords ?
