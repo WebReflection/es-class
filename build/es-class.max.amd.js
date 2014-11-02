@@ -47,8 +47,9 @@ var Class = Class || (function (Object) {
     // IE < 9 bug only
     hasIEEnumerableBug = !{valueOf:0}[nonEnumerables[3]](nonEnumerables[6]),
 
-    // Blackberry 7 and old webkit bug only
-    hasNotBB7EnumerableBug = !Class[nonEnumerables[3]](PROTOTYPE),
+    // Blackberry 7 and old WebKit bug only:
+    //  user defined functions have enumerable prototype and constructor
+    hasNotBB7EnumerableBug = !setProperty[nonEnumerables[3]](PROTOTYPE),
 
     hOP = Object[nonEnumerables[1]],
 
@@ -57,7 +58,7 @@ var Class = Class || (function (Object) {
     create = Object.create || function (proto) {
       /*jshint newcap: false */
       create[PROTOTYPE] = proto;
-      var object = new create;
+      var object = new create();
       create[PROTOTYPE] = null;
       return object;
     },
@@ -107,7 +108,7 @@ var Class = Class || (function (Object) {
   }
 
   // Class({ ... })
-  function Class(description) {
+  return function (description) {
     var
       hasConstructor = hOP.call(description, CONSTRUCTOR),
       constructor = hasConstructor ?
@@ -140,9 +141,7 @@ var Class = Class || (function (Object) {
     // enrich the prototype
     copyEnumerables(description, prototype, false);
     return constructor;
-  }
-
-  return Class;
+  };
 
 }(Object));
   return Class;
