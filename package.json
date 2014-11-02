@@ -1,13 +1,24 @@
 {
-  "version": "0.0.0",
+  "version": "0.1.0",
   "license": "MIT",
   "name": "es-class",
-  "description": "",
+  "description": "ECMAScript 3 to latest compatible Class definition",
   "homepage": "https://github.com/WebReflection/es-class",
-  "keywords": [],
+  "keywords": [
+    "ES3",
+    "ES5",
+    "ES6",
+    "KISS",
+    "Class",
+    "inheritance",
+    "prototypal",
+    "prototype",
+    "simple",
+    "basic"
+  ],
   "author": {
-    "name": "",
-    "web": ""
+    "name": "Andrea Giammarchi",
+    "web": "http://webreflection.blogspot.com/"
   },
   "repository": {
     "type": "git",
@@ -17,7 +28,7 @@
   "scripts": {
     "test": "node test/.test.js"
   },
-  "dependencies": {
+  "devDependencies": {
     "wru": ">= 0.0.0"
   }
 }
