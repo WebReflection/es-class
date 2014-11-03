@@ -165,5 +165,33 @@ wru.test([
         check(B.prototype, 'b', 'b', false);
       }
     }
+  }, {
+    name: 'supports non quoted properties',
+    test: function () {
+      try {
+        Function('Class, callback', [
+          "var A=Class({static:{A:'a'},a:1});",
+          "var B=Class({extends:A,static:{B:'b'},b:2});",
+          "callback(A, B);"
+        ].join('\n'))(Class, function (A, B) {
+            wru.assert(typeof A === 'function');
+            wru.assert(typeof B === 'function');
+            wru.assert(new A instanceof A);
+            wru.assert(!(new A instanceof B));
+            wru.assert(new B instanceof A);
+            wru.assert(new B instanceof B);
+            wru.assert(A.A === 'a');
+            wru.assert(A.B === undefined);
+            wru.assert(B.A === 'a');
+            wru.assert(B.B === 'b');
+            wru.assert((new A).a === 1);
+            wru.assert((new A).b === undefined);
+            wru.assert((new B).a === 1);
+            wru.assert((new B).b === 2);
+        });
+      } catch(oldJSEngine) {
+        // minifiers will take care of the problem ;-)
+      }
+    }
   }
 ]);
