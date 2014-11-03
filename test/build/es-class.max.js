@@ -56,10 +56,9 @@ var Class = Class || (function (Object) {
     // use es5-shim if you want a properly patched Object.create polyfill
     create = Object.create || function (proto) {
       /*jshint newcap: false */
-      create[PROTOTYPE] = proto;
-      var object = new create();
-      create[PROTOTYPE] = null;
-      return object;
+      var isInstance = this instanceof create;
+      create[PROTOTYPE] = isInstance ? null : proto;
+      return isInstance ? this : new create();
     },
     defineProperty = Object.defineProperty
   ;
