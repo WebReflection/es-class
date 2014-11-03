@@ -134,5 +134,36 @@ wru.test([
       wru.assert(B.a === undefined);
       wru.assert(a.b === undefined);
     }
+  }, {
+    name: 'configuration',
+    test: function () {
+      function check(obj, prop, value, publicStatic) {
+        var tmp = gOPD(obj, prop);
+        wru.assert('checking ' + prop,
+          !!tmp.enumerable === publicStatic &&
+          !!tmp.configurable === !publicStatic &&
+          !!tmp.writable === !publicStatic &&
+          tmp.value === value
+        );
+      }
+      var gOPD = Object.getOwnPropertyDescriptor;
+      // ignore IE8 for this test
+      if (/*@cc_on 5.8<@_jscript_version&&@*/gOPD) {
+        var A = Class({
+          'static': {A: 'a'},
+          a: 'a'
+        });
+        var B = Class({
+          'extends': A,
+          'static': {B: 'b'},
+          b: 'b'
+        });
+        check(A, 'A', 'a', true);
+        check(A.prototype, 'a', 'a', false);
+        check(B, 'A', 'a', true);
+        check(B, 'B', 'b', true);
+        check(B.prototype, 'b', 'b', false);
+      }
+    }
   }
 ]);

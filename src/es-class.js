@@ -54,34 +54,38 @@ var Class = Class || (function (Object) {
 
   // copy enumerable source properties as tearget properties
   // these might be copied as enumerable (i.e. statics) or not
-  function copyEnumerables(source, target, makeEnumerable) {
+  function copyEnumerables(source, target, publicStatic) {
     var key, i;
     for (key in source) {
       if (
         hOP.call(source, key) &&
         (hasNotBB7EnumerableBug || (key !== PROTOTYPE))
       ) {
-        setProperty(target, key, source[key], makeEnumerable);
+        setProperty(target, key, source[key], publicStatic);
       }
     }
     if (hasIEEnumerableBug) {
       for (i = 0; i < nonEnumerables.length; i++) {
         key = nonEnumerables[i];
         if (hOP.call(source, key)) {
-          setProperty(target, key, source[key], makeEnumerable);
+          setProperty(target, key, source[key], publicStatic);
         }
       }
     }
   }
 
   // set a property via defineProperty using a common descriptor
-  function setProperty(target, key, value, makeEnumerable) {
-    return defineProperty(target, key, {
-      enumerable: makeEnumerable,
-      configurable: true,
-      writable: true,
-      value: value
-    });
+  // only if properties where not defined yet.
+  // If publicStatic is true, properties are both non configurable and non writable
+  function setProperty(target, key, value, publicStatic) {
+    return publicStatic && hOP.call(target, key) ?
+      target :
+      defineProperty(target, key, {
+        enumerable: publicStatic,
+        configurable: !publicStatic,
+        writable: !publicStatic,
+        value: value
+      });
   }
 
   // Class({ ... })
@@ -101,19 +105,19 @@ var Class = Class || (function (Object) {
     if (hasConstructor) {
       delete description[CONSTRUCTOR];
     }
+    if (hOP.call(description, STATIC)) {
+      // add new public static properties first
+      copyEnumerables(description[STATIC], constructor, true);
+      delete description[STATIC];
+    }
     if (hasParent) {
       // in case it's a function
       if (parent !== inherits) {
-        // copy possibly inherited statics
+        // copy possibly inherited statics too
         copyEnumerables(parent, constructor, true);
       }
       constructor[PROTOTYPE] = prototype;
       delete description[EXTENDS];
-    }
-    if (hOP.call(description, STATIC)) {
-      // add new statics
-      copyEnumerables(description[STATIC], constructor, true);
-      delete description[STATIC];
     }
     // enrich the prototype
     copyEnumerables(description, prototype, false);
