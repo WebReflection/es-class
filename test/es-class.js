@@ -342,16 +342,16 @@ wru.test([
       var B = Class({
         'extends': A,
         method: function (arg) {
-          this.super(arg, 456);
+          this['super'](arg, 456);
         }
       });
       var C = Class({
         'extends': B,
         method: function (arg) {
-          this.super(arg);
+          this['super'](arg);
         },
         holed: function () {
-          this.super(this.super === A.prototype.holed);
+          this['super'](this['super'] === A.prototype.holed);
         }
       });
       var c = new C;
