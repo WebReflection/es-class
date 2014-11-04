@@ -1,9 +1,5 @@
 {
-<<<<<<< HEAD
   "version": "0.3.1",
-=======
-  "version": "0.3.0",
->>>>>>> f92ce48fbb35f714c1a50f60f13d1b5b9b694006
   "license": "MIT",
   "name": "es-class",
   "description": "ECMAScript 3 to latest compatible Class definition",
