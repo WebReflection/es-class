@@ -7,7 +7,11 @@ var Class = Class || (function (Object) {
     // shortcuts for minifiers and ES3 private keywords too
     CONSTRUCTOR = 'constructor',
     EXTENDS = 'extends',
+<<<<<<< HEAD
     WITH = 'with',
+=======
+    IMPORT = 'import',
+>>>>>>> f92ce48fbb35f714c1a50f60f13d1b5b9b694006
     INIT = 'init',
     PROTOTYPE = 'prototype',
     STATIC = 'static',
@@ -71,6 +75,7 @@ var Class = Class || (function (Object) {
           hOP.call(object, key)
         ) {
           if (hOP.call(target, key)) {
+<<<<<<< HEAD
             try {
               console.warn('duplicated: ' + key);
             } catch(meh) {
@@ -78,6 +83,12 @@ var Class = Class || (function (Object) {
             }
           }
           setProperty(target, key, object[key], false);
+=======
+            throw new Error('duplicated: ' + key);
+          } else {
+            setProperty(target, key, object[key], false);
+          }
+>>>>>>> f92ce48fbb35f714c1a50f60f13d1b5b9b694006
         }
       }
     }
@@ -93,7 +104,11 @@ var Class = Class || (function (Object) {
         // ignore all special keywords
         key !== CONSTRUCTOR &&
         key !== EXTENDS &&
+<<<<<<< HEAD
         key !== WITH &&
+=======
+        key !== IMPORT &&
+>>>>>>> f92ce48fbb35f714c1a50f60f13d1b5b9b694006
         key !== STATIC &&
         // Blackberry 7 and old WebKit bug only:
         //  user defined functions have
@@ -159,8 +174,13 @@ var Class = Class || (function (Object) {
     // enrich the prototype
     copyEnumerables(description, prototype, false);
     // add no conflict mixins
+<<<<<<< HEAD
     if (hOP.call(description, WITH)) {
       mixins = addMixins([].concat(description[WITH]), prototype);
+=======
+    if (hOP.call(description, IMPORT)) {
+      mixins = addMixins([].concat(description[IMPORT]), prototype);
+>>>>>>> f92ce48fbb35f714c1a50f60f13d1b5b9b694006
       if (mixins.length) {
         constructor = (function (parent, mixins) {
           return function () {
