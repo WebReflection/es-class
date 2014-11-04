@@ -62,7 +62,9 @@ var Class = Class || (function (Object) {
     // redefined if not present
     defineProperty = Object.defineProperty,
 
-    superRegExp = /create/.test(function () {create}) ? /\bsuper\b/ : /.*/
+    superRegExp = /create/.test(function () {
+      create();
+    }) ? /\bsuper\b/ : /.*/
 
   ;
 
