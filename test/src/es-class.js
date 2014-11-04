@@ -11,10 +11,10 @@ var Class = Class || (function (Object) {
     INIT = 'init',
     PROTOTYPE = 'prototype',
     STATIC = 'static',
+    SUPER = 'super',
 
     // used to copy non enumerable properties on IE
     nonEnumerables = [
-      CONSTRUCTOR,
       'hasOwnProperty',
       'isPrototypeOf',
       'propertyIsEnumerable',
@@ -24,9 +24,9 @@ var Class = Class || (function (Object) {
     ],
 
     // IE < 9 bug only
-    hasIEEnumerableBug = !{valueOf:0}[nonEnumerables[3]](nonEnumerables[6]),
+    hasIEEnumerableBug = !{valueOf:0}[nonEnumerables[2]](nonEnumerables[5]),
 
-    hOP = Object[nonEnumerables[1]],
+    hOP = Object[nonEnumerables[0]],
 
     // basic ad-hoc private fallback for old browsers
     // use es5-shim if you want a properly patched Object.create polyfill
@@ -38,7 +38,12 @@ var Class = Class || (function (Object) {
     },
 
     // redefined if not present
-    defineProperty = Object.defineProperty
+    defineProperty = Object.defineProperty,
+
+    superRegExp = /create/.test(function () {
+      create();
+    }) ? /\bsuper\b/ : /.*/
+
   ;
 
   // verified broken IE8
@@ -53,80 +58,95 @@ var Class = Class || (function (Object) {
 
   // copy all imported enumerable methods and properties
   // throws if there is any duplicated name in the prototype
-  function addMixins(mixins, target) {
+  function addMixins(mixins, target, inherits) {
     for (var
-      object,
-      key,
+      source,
       init = [],
-      i = 0;
-      i < mixins.length; i++
+      i = 0; i < mixins.length; i++
     ) {
-      object = mixins[i];
-      if (hOP.call(object, INIT)) {
-        init.push(object[INIT]);
+      source = mixins[i];
+      if (hOP.call(source, INIT)) {
+        init.push(source[INIT]);
       }
-      for (key in object) {
-        if (
-          key !== INIT &&
-          hOP.call(object, key)
-        ) {
-          if (hOP.call(target, key)) {
-            try {
-              console.warn('duplicated: ' + key);
-            } catch(meh) {
-              /*\_(ツ)_*/
-            }
-          }
-          setProperty(target, key, object[key], false);
-        }
-      }
+      copyEnumerables(source, target, inherits, false, false);
     }
     return init;
   }
 
-  // copy enumerable source properties as tearget properties
-  // these might be copied as enumerable (i.e. statics) or not
-  function copyEnumerables(source, target, publicStatic) {
+  function isNotASpecialKey(key, allowInit) {
+    return  key !== CONSTRUCTOR &&
+            key !== EXTENDS &&
+            key !== WITH &&
+            key !== STATIC &&
+            // Blackberry 7 and old WebKit bug only:
+            //  user defined functions have
+            //  enumerable prototype and constructor
+            key !== PROTOTYPE &&
+            (allowInit || key !== INIT);
+  }
+
+  // configure enumerable source properties in the target
+  function copyEnumerables(source, target, inherits, publicStatic, allowInit) {
     var key, i;
     for (key in source) {
-      if (
-        // ignore all special keywords
-        key !== CONSTRUCTOR &&
-        key !== EXTENDS &&
-        key !== WITH &&
-        key !== STATIC &&
-        // Blackberry 7 and old WebKit bug only:
-        //  user defined functions have
-        //  enumerable prototype and constructor
-        key !== PROTOTYPE &&
-        //verify it's own property
-        hOP.call(source, key)
-      ) {
-        setProperty(target, key, source[key], publicStatic);
+      if (isNotASpecialKey(key, allowInit) && hOP.call(source, key)) {
+        if (hOP.call(target, key)) {
+          try {
+            console.warn('duplicated: ' + key);
+          } catch(meh) {
+            /*\_(ツ)_*/
+          }
+        }
+        setProperty(inherits, target, key, source[key], publicStatic);
       }
     }
     if (hasIEEnumerableBug) {
       for (i = 0; i < nonEnumerables.length; i++) {
         key = nonEnumerables[i];
         if (hOP.call(source, key)) {
-          setProperty(target, key, source[key], publicStatic);
+          setProperty(inherits, target, key, source[key], publicStatic);
         }
       }
     }
   }
 
+  function define(target, key, value, publicStatic) {
+    return defineProperty(target, key, {
+      enumerable: publicStatic,
+      configurable: !publicStatic,
+      writable: !publicStatic,
+      value: value
+    });
+  }
+
+  function wrap(inherits, target, key, value, publicStatic) {
+    return function () {
+      var
+        current = this[SUPER],
+        result = value.apply(
+          define(this, SUPER, inherits[key], publicStatic),
+          arguments
+        )
+      ;
+      define(this, SUPER, current, publicStatic);
+      return result;
+    };
+  }
+
   // set a property via defineProperty using a common descriptor
   // only if properties where not defined yet.
   // If publicStatic is true, properties are both non configurable and non writable
-  function setProperty(target, key, value, publicStatic) {
-    return publicStatic && hOP.call(target, key) ?
-      target :
-      defineProperty(target, key, {
-        enumerable: publicStatic,
-        configurable: !publicStatic,
-        writable: !publicStatic,
-        value: value
-      });
+  function setProperty(inherits, target, key, value, publicStatic) {
+    if (publicStatic) {
+      if (hOP.call(target, key)) {
+        return target;
+      }
+    } else {
+      if (typeof value === 'function' && superRegExp.test(value)) {
+        value = wrap(inherits, target, key, value, publicStatic);
+      }
+    }
+    return define(target, key, value, publicStatic);
   }
 
   // Class({ ... })
@@ -140,38 +160,40 @@ var Class = Class || (function (Object) {
       inherits = hasParent && typeof parent === 'function' ?
         parent[PROTOTYPE] : parent,
       prototype = hasParent ?
-        setProperty(create(inherits), CONSTRUCTOR, constructor, false) :
+        setProperty(inherits, create(inherits), CONSTRUCTOR, constructor, false) :
         constructor[PROTOTYPE],
-      mixins
+      mixins,
+      length
     ;
     if (hOP.call(description, STATIC)) {
       // add new public static properties first
-      copyEnumerables(description[STATIC], constructor, true);
+      copyEnumerables(description[STATIC], constructor, inherits, true, true);
     }
     if (hasParent) {
       // in case it's a function
       if (parent !== inherits) {
         // copy possibly inherited statics too
-        copyEnumerables(parent, constructor, true);
+        copyEnumerables(parent, constructor, inherits, true, true);
       }
       constructor[PROTOTYPE] = prototype;
     }
-    // enrich the prototype
-    copyEnumerables(description, prototype, false);
-    // add no conflict mixins
+    // add modules/mixins
     if (hOP.call(description, WITH)) {
-      mixins = addMixins([].concat(description[WITH]), prototype);
-      if (mixins.length) {
-        constructor = (function (parent, mixins) {
+      mixins = addMixins([].concat(description[WITH]), prototype, inherits);
+      length = mixins.length;
+      if (length) {
+        constructor = (function (parent) {
           return function () {
-            var i = 0, length = mixins.length;
+            var i = 0;
             while (i < length) mixins[i++].call(this);
             return parent.apply(this, arguments);
           };
-        }(constructor, mixins));
+        }(constructor));
         constructor[PROTOTYPE] = prototype;
       }
     }
+    // enrich the prototype
+    copyEnumerables(description, prototype, inherits, false, true);
     return constructor;
   };
 

@@ -266,6 +266,45 @@ wru.test([
       wru.assert(e instanceof A && e instanceof B && e instanceof E);
     }
   }, {
+    name: 'overwriting order',
+    test: function () {
+      var A = Class({
+        'static': {
+          J: 'J1',
+          K: 'K1'
+        },
+        'with': [{
+          a: 'a1',
+          b: 'b1',
+          c: 'c1'
+        }, {
+          a: 'a2'
+        }],
+        b: 'b2'
+      });
+      var B = Class({
+        'extends': A,
+        'static': {
+          K: 'K2'
+        },
+        'with': {
+          a: 'a3'
+        },
+        b: 'b3'
+      });
+      var a = new A;
+      var b = new B;
+      wru.assert('A.J', A.J === 'J1');
+      wru.assert('A.K', A.K === 'K1');
+      wru.assert('a.a', a.a === 'a2');
+      wru.assert('a.b', a.b === 'b2');
+      wru.assert('a.c', a.c === 'c1');
+      wru.assert('B.J', B.J === 'J1');
+      wru.assert('B.K', B.K === 'K2');
+      wru.assert('b.a', b.a === 'a3');
+      wru.assert('b.b', b.b === 'b3');
+    }
+  },{
     name: 'throws on duplicated',
     test: function () {
       var message;
@@ -276,12 +315,54 @@ wru.test([
         message = warning;
       };
       var A = Class({
-        a: 1,
-        'with': {
+        'with': [{
+          a: 1
+        }, {
           a: 2
-        }
+        }]
       });
       wru.assert(message === 'duplicated: a');
+    }
+  }, {
+    name: 'super',
+    test: function () {
+      var invoke;
+      var holed;
+      var A = Class({
+        method: function () {
+          invoke = {
+            context: this,
+            arguments: arguments
+          };
+        },
+        holed: function (success) {
+          holed = success;
+        }
+      });
+      var B = Class({
+        'extends': A,
+        method: function (arg) {
+          this['super'](arg, 456);
+        }
+      });
+      var C = Class({
+        'extends': B,
+        method: function (arg) {
+          this['super'](arg);
+        },
+        holed: function () {
+          this['super'](this['super'] === A.prototype.holed);
+        }
+      });
+      var c = new C;
+      c.method(123);
+      wru.assert('right context', invoke.context === c);
+      wru.assert('right arguments length', invoke.arguments.length === 2);
+      wru.assert('right first argument', invoke.arguments[0] === 123);
+      wru.assert('right second argument', invoke.arguments[1] === 456);
+      c.holed();
+      wru.assert('holed method', holed);
+      wru.assert('B has no holed method', !B.prototype.hasOwnProperty('holed'));
     }
   }
 ]);
