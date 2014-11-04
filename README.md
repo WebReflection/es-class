@@ -5,7 +5,7 @@ es-class
 
 
 ### Simple, semantic, performant and lightweight Class definition for ECMAScript 3, 5, and 6 compatible engines
-This basic tool to define classes fits in few bytes (~590 bytes) bringing a semantic and elegant way to define [cross platform](http://webreflection.github.io/es-class/test) all classes you need.
+This basic tool to define classes fits in few bytes (774 bytes minzipped) bringing a semantic and elegant way to define [cross platform](http://webreflection.github.io/es-class/test) all classes you need.
 ```js
 var Rectangle = new Class({
   constructor: function Rectangle(width, height) {
