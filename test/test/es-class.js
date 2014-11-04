@@ -193,5 +193,93 @@ wru.test([
         // minifiers will take care of the problem ;-)
       }
     }
+  }, {
+    name: 'import',
+    test: function () {
+      var A = Class({
+        'import': {
+          init: function () {
+            this.imported = true;
+          },
+          mixedA: 'mixedA'
+        },
+        a: 'a'
+      });
+      wru.assert((new A).a === 'a');
+      wru.assert((new A).mixedA === 'mixedA');
+      wru.assert((new A).imported === true);
+    }
+  }, {
+    name: 'multiple import',
+    test: function () {
+      var sequence = [];
+      var A = Class({
+        'import': {
+          init: function () {
+            sequence.push('A#mixin');
+          }
+        },
+        constructor: function () {
+          sequence.push('A#constructor');
+        }
+      });
+      var B = Class({
+        'extends': A,
+        'import': {
+          init: function () {
+            sequence.push('B#mixin');
+          }
+        },
+        constructor: function () {
+          sequence.push('B#constructor');
+          A.call(this);
+        }
+      });
+      var C = {
+        init: function () {
+          sequence.push('C#mixin');
+        }
+      };
+      var D = {
+        init: function () {
+          sequence.push('D#mixin');
+        }
+      };
+      var E = Class({
+        'extends': B,
+        'import': [C, D],
+        constructor: function () {
+          sequence.push('C#constructor');
+          B.call(this);
+        }
+      });
+      var e = new E;
+      wru.assert(sequence.join(',') === [
+        'C#mixin',
+        'D#mixin',
+        'C#constructor',
+        'B#mixin',
+        'B#constructor',
+        'A#mixin',
+        'A#constructor'
+      ].join(','));
+      wru.assert(e instanceof A && e instanceof B && e instanceof E);
+    }
+  }, {
+    name: 'throws on duplicated',
+    test: function () {
+      var message;
+      try {
+        var A = Class({
+          a: 1,
+          'import': {
+            a: 2
+          }
+        });
+      } catch(e) {
+        message = e.message;
+      }
+      wru.assert(message === 'duplicated: a');
+    }
   }
 ]);
