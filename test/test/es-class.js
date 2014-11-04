@@ -194,12 +194,12 @@ wru.test([
       }
     }
   }, {
-    name: 'import',
+    name: 'with',
     test: function () {
       var A = Class({
-        'import': {
+        'with': {
           init: function () {
-            this.imported = true;
+            this.mixinInvoked = true;
           },
           mixedA: 'mixedA'
         },
@@ -207,14 +207,14 @@ wru.test([
       });
       wru.assert((new A).a === 'a');
       wru.assert((new A).mixedA === 'mixedA');
-      wru.assert((new A).imported === true);
+      wru.assert((new A).mixinInvoked === true);
     }
   }, {
-    name: 'multiple import',
+    name: 'multiple with',
     test: function () {
       var sequence = [];
       var A = Class({
-        'import': {
+        'with': {
           init: function () {
             sequence.push('A#mixin');
           }
@@ -225,7 +225,7 @@ wru.test([
       });
       var B = Class({
         'extends': A,
-        'import': {
+        'with': {
           init: function () {
             sequence.push('B#mixin');
           }
@@ -247,7 +247,7 @@ wru.test([
       };
       var E = Class({
         'extends': B,
-        'import': [C, D],
+        'with': [C, D],
         constructor: function () {
           sequence.push('C#constructor');
           B.call(this);
@@ -269,16 +269,18 @@ wru.test([
     name: 'throws on duplicated',
     test: function () {
       var message;
-      try {
-        var A = Class({
-          a: 1,
-          'import': {
-            a: 2
-          }
-        });
-      } catch(e) {
-        message = e.message;
+      if (typeof console === 'undefined') {
+        console = {};
       }
+      console.warn = function (warning) {
+        message = warning;
+      };
+      var A = Class({
+        a: 1,
+        'with': {
+          a: 2
+        }
+      });
       wru.assert(message === 'duplicated: a');
     }
   }
