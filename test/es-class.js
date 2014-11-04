@@ -323,5 +323,46 @@ wru.test([
       });
       wru.assert(message === 'duplicated: a');
     }
+  }, {
+    name: 'super',
+    test: function () {
+      var invoke;
+      var holed;
+      var A = Class({
+        method: function () {
+          invoke = {
+            context: this,
+            arguments: arguments
+          };
+        },
+        holed: function (success) {
+          holed = success;
+        }
+      });
+      var B = Class({
+        'extends': A,
+        method: function (arg) {
+          this.super(arg, 456);
+        }
+      });
+      var C = Class({
+        'extends': B,
+        method: function (arg) {
+          this.super(arg);
+        },
+        holed: function () {
+          this.super(this.super === A.prototype.holed);
+        }
+      });
+      var c = new C;
+      c.method(123);
+      wru.assert('right context', invoke.context === c);
+      wru.assert('right arguments length', invoke.arguments.length === 2);
+      wru.assert('right first argument', invoke.arguments[0] === 123);
+      wru.assert('right second argument', invoke.arguments[1] === 456);
+      c.holed();
+      wru.assert('holed method', holed);
+      wru.assert('B has no holed method', !B.prototype.hasOwnProperty('holed'));
+    }
   }
 ]);
