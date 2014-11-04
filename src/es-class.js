@@ -7,6 +7,8 @@ var Class = Class || (function (Object) {
     // shortcuts for minifiers and ES3 private keywords too
     CONSTRUCTOR = 'constructor',
     EXTENDS = 'extends',
+    WITH = 'with',
+    INIT = 'init',
     PROTOTYPE = 'prototype',
     STATIC = 'static',
 
@@ -24,10 +26,6 @@ var Class = Class || (function (Object) {
     // IE < 9 bug only
     hasIEEnumerableBug = !{valueOf:0}[nonEnumerables[3]](nonEnumerables[6]),
 
-    // Blackberry 7 and old WebKit bug only:
-    //  user defined functions have enumerable prototype and constructor
-    hasNotBB7EnumerableBug = !setProperty[nonEnumerables[3]](PROTOTYPE),
-
     hOP = Object[nonEnumerables[1]],
 
     // basic ad-hoc private fallback for old browsers
@@ -38,6 +36,8 @@ var Class = Class || (function (Object) {
       create[PROTOTYPE] = isInstance ? null : proto;
       return isInstance ? this : new create();
     },
+
+    // redefined if not present
     defineProperty = Object.defineProperty
   ;
 
@@ -51,14 +51,56 @@ var Class = Class || (function (Object) {
     };
   }
 
+  // copy all imported enumerable methods and properties
+  // throws if there is any duplicated name in the prototype
+  function addMixins(mixins, target) {
+    for (var
+      object,
+      key,
+      init = [],
+      i = 0;
+      i < mixins.length; i++
+    ) {
+      object = mixins[i];
+      if (hOP.call(object, INIT)) {
+        init.push(object[INIT]);
+      }
+      for (key in object) {
+        if (
+          key !== INIT &&
+          hOP.call(object, key)
+        ) {
+          if (hOP.call(target, key)) {
+            try {
+              console.warn('duplicated: ' + key);
+            } catch(meh) {
+              /*\_(ツ)_*/
+            }
+          }
+          setProperty(target, key, object[key], false);
+        }
+      }
+    }
+    return init;
+  }
+
   // copy enumerable source properties as tearget properties
   // these might be copied as enumerable (i.e. statics) or not
   function copyEnumerables(source, target, publicStatic) {
     var key, i;
     for (key in source) {
       if (
-        hOP.call(source, key) &&
-        (hasNotBB7EnumerableBug || (key !== PROTOTYPE))
+        // ignore all special keywords
+        key !== CONSTRUCTOR &&
+        key !== EXTENDS &&
+        key !== WITH &&
+        key !== STATIC &&
+        // Blackberry 7 and old WebKit bug only:
+        //  user defined functions have
+        //  enumerable prototype and constructor
+        key !== PROTOTYPE &&
+        //verify it's own property
+        hOP.call(source, key)
       ) {
         setProperty(target, key, source[key], publicStatic);
       }
@@ -99,15 +141,12 @@ var Class = Class || (function (Object) {
         parent[PROTOTYPE] : parent,
       prototype = hasParent ?
         setProperty(create(inherits), CONSTRUCTOR, constructor, false) :
-        constructor[PROTOTYPE]
+        constructor[PROTOTYPE],
+      mixins
     ;
-    if (hasConstructor) {
-      delete description[CONSTRUCTOR];
-    }
     if (hOP.call(description, STATIC)) {
       // add new public static properties first
       copyEnumerables(description[STATIC], constructor, true);
-      delete description[STATIC];
     }
     if (hasParent) {
       // in case it's a function
@@ -116,10 +155,23 @@ var Class = Class || (function (Object) {
         copyEnumerables(parent, constructor, true);
       }
       constructor[PROTOTYPE] = prototype;
-      delete description[EXTENDS];
     }
     // enrich the prototype
     copyEnumerables(description, prototype, false);
+    // add no conflict mixins
+    if (hOP.call(description, WITH)) {
+      mixins = addMixins([].concat(description[WITH]), prototype);
+      if (mixins.length) {
+        constructor = (function (parent, mixins) {
+          return function () {
+            var i = 0, length = mixins.length;
+            while (i < length) mixins[i++].call(this);
+            return parent.apply(this, arguments);
+          };
+        }(constructor, mixins));
+        constructor[PROTOTYPE] = prototype;
+      }
+    }
     return constructor;
   };
 
