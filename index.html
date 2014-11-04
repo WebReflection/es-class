@@ -52,9 +52,9 @@
 <p><a href="http://travis-ci.org/WebReflection/es-class"><img src="https://secure.travis-ci.org/WebReflection/es-class.png" alt="build status"></a></p>
 
 <h3>
-<a name="simple-semantic-and-lightweight" class="anchor" href="#simple-semantic-and-lightweight"><span class="octicon octicon-link"></span></a>Simple, semantic, and lightweight</h3>
+<a name="simple-semantic-performant-and-lightweight-class-definition-for-ecmascript-3-5-and-6-compatible-engines" class="anchor" href="#simple-semantic-performant-and-lightweight-class-definition-for-ecmascript-3-5-and-6-compatible-engines"><span class="octicon octicon-link"></span></a>Simple, semantic, performant and lightweight Class definition for ECMAScript 3, 5, and 6 compatible engines</h3>
 
-<p>This basic tool to define classes fits in few bytes (~570) bringing a semantic and elegant way to define <a href="http://webreflection.github.io/es-class/test">cross platform</a> all classes you need.</p>
+<p>This basic tool to define classes fits in few bytes (~590 bytes) bringing a semantic and elegant way to define <a href="http://webreflection.github.io/es-class/test">cross platform</a> all classes you need.</p>
 
 <div class="highlight highlight-js"><pre><span class="kd">var</span> <span class="nx">Rectangle</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Class</span><span class="p">({</span>
   <span class="nx">constructor</span><span class="o">:</span> <span class="kd">function</span> <span class="nx">Rectangle</span><span class="p">(</span><span class="nx">width</span><span class="p">,</span> <span class="nx">height</span><span class="p">)</span> <span class="p">{</span>
@@ -71,11 +71,42 @@
 <span class="p">});</span>
 </pre></div>
 
-<p>Beside <code>extends</code> there is only one extra property: <code>static</code>.</p>
+<h4>
+<a name="minimal-convenience-for-common-daily-tasks" class="anchor" href="#minimal-convenience-for-common-daily-tasks"><span class="octicon octicon-link"></span></a>Minimal convenience for common daily tasks</h4>
 
-<p>Such property is used to define all static properties <strong>only</strong> on the constructor, avoiding interferences with instances, still preserving inheritance within constructors statics.</p>
+<p>There is no black magic behind any of <code>es-class</code> behaviors, what you see is what you expect and what you get.</p>
 
-<p>In case it's needed, it is possible to define both statics and properties without problems.</p>
+<h3>
+<a name="about-extends-property" class="anchor" href="#about-extends-property"><span class="octicon octicon-link"></span></a>About <code>extends</code> property</h3>
+
+<p>The <code>extends</code> property is used to indeed extends other classes or objects.</p>
+
+<p>A generic prototype descriptor for each extended property would use this configuration:</p>
+
+<div class="highlight highlight-js"><pre><span class="p">{</span>
+    <span class="nx">enumerable</span><span class="o">:</span> <span class="kc">false</span><span class="p">,</span>      <span class="c1">// not visible in for/in loops</span>
+    <span class="nx">configurable</span><span class="o">:</span> <span class="kc">true</span><span class="p">,</span>     <span class="c1">// can be redefined when/if needed</span>
+    <span class="nx">writable</span><span class="o">:</span> <span class="kc">true</span>          <span class="c1">// can be overwritten when/if needed</span>
+<span class="p">}</span>
+</pre></div>
+
+<p>However, it's never too late to <code>Object.freeze</code> a <code>prototype</code> but I believe most of the time is not needed.</p>
+
+<h4>
+<a name="about-static-property" class="anchor" href="#about-static-property"><span class="octicon octicon-link"></span></a>About <code>static</code> property</h4>
+
+<p>The <code>static</code> property is used to define all public static properties <strong>only</strong> on the constructor, avoiding interferences with instances, still preserving inheritance within constructors statics.</p>
+
+<p>A generic descriptor for a public static property would use this configuration:</p>
+
+<div class="highlight highlight-js"><pre><span class="p">{</span>
+    <span class="nx">enumerable</span><span class="o">:</span> <span class="kc">true</span><span class="p">,</span>       <span class="c1">// visible</span>
+    <span class="nx">configurable</span><span class="o">:</span> <span class="kc">false</span><span class="p">,</span>    <span class="c1">// cannot remove or re-configure</span>
+    <span class="nx">writable</span><span class="o">:</span> <span class="kc">false</span>         <span class="c1">// cannot re-assign</span>
+<span class="p">}</span>
+</pre></div>
+
+<p>In case it's needed, it is possible to define both statics <em>and</em> properties without problems.</p>
 
 <div class="highlight highlight-js"><pre><span class="kd">var</span> <span class="nx">Rectangle</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Class</span><span class="p">({</span>
   <span class="kr">static</span><span class="o">:</span> <span class="p">{</span>
@@ -95,13 +126,6 @@
 <span class="nx">Rectangle</span><span class="p">.</span><span class="nx">SHAPE</span><span class="p">;</span>  <span class="c1">// Rectangle</span>
 </pre></div>
 
-<h4>
-<a name="minimal-convenience-for-common-daily-tasks" class="anchor" href="#minimal-convenience-for-common-daily-tasks"><span class="octicon octicon-link"></span></a>Minimal convenience for common daily tasks</h4>
-
-<p>There is no black magic behind any of <code>es-class</code> behaviors, what you see is what you get.</p>
-
-<p>No magic <code>superClass</code> or <code>sup</code>, no magic wraps whatsoever, you explicitly invoke what you need when and if you need.</p>
-
 <h3>
 <a name="es3-friendly-via-es5-compatible-syntax" class="anchor" href="#es3-friendly-via-es5-compatible-syntax"><span class="octicon octicon-link"></span></a>ES3 friendly via ES5 compatible syntax</h3>
 
@@ -119,12 +143,12 @@
 <span class="p">});</span>
 </pre></div>
 
-<p>It will result in the following, once minified, using both closure compiler and uglify JS:</p>
+<p>It will result in the following, once minified, using both closure compiler or uglify JS:</p>
 
 <div class="highlight highlight-js"><pre><span class="kd">var</span> <span class="nx">A</span><span class="o">=</span><span class="nx">Class</span><span class="p">({</span><span class="s2">"static"</span><span class="o">:</span><span class="p">{</span><span class="nx">A</span><span class="o">:</span><span class="s2">"a"</span><span class="p">}}),</span><span class="nx">B</span><span class="o">=</span><span class="nx">Class</span><span class="p">({</span><span class="s2">"extends"</span><span class="o">:</span><span class="nx">A</span><span class="p">});</span>
 </pre></div>
 
-<p>No build task? Simply wrap them in quote as done in the <a href="test/es-class.js">test file</a>.</p>
+<p>No build task? Just wrap them in quotes as done in the <a href="test/es-class.js">test file</a>.</p>
 
 <p>However, this is mostly IE8 and lower only issue, nothing to worry about for IE9 and modern engines, including nodejs and others.</p>
 
@@ -134,12 +158,17 @@
 <h4>
 <a name="is-it-safe-to-use-protected-keywords-" class="anchor" href="#is-it-safe-to-use-protected-keywords-"><span class="octicon octicon-link"></span></a>is it safe to use protected keywords ?</h4>
 
-<p>In this ES5 compatible age all keywords are not protected anymore. <code>weakMap.delete(object)</code> is a basic example where protected keyword as <code>delete</code> is can be used without problems indeed. However, as specified in the previous chapter, all modern minifiers will take care of these names wrapping them in quotes so that no engine will fail but your source code will still look awesome.</p>
+<p>In this ES5 compatible age all keywords are not protected anymore. <code>weakMap.delete(object)</code> is a basic example where protected keywords, as <code>delete</code> is, can be used without problems indeed. However, as specified in the previous chapter, all modern minifiers will take care of these names wrapping them in quotes so that no engine will fail but your source code will still look awesome.</p>
 
 <h4>
 <a name="but-why-using-protected-keywords-" class="anchor" href="#but-why-using-protected-keywords-"><span class="octicon octicon-link"></span></a>but why using protected keywords ?</h4>
 
 <p>Your editor will most likely syntax highlight both <code>extends</code> and <code>static</code> so that you can easily and instantly spot them. It's actually a help for you writing code, no special highlight? It's mispelled! Has special highlights? Quickly find them while scrolling and read what these classes do and from where.</p>
+
+<h4>
+<a name="are-properties-not-enumerable-in-ie8-and-lower-too-" class="anchor" href="#are-properties-not-enumerable-in-ie8-and-lower-too-"><span class="octicon octicon-link"></span></a>are properties not enumerable in IE8 and lower too ?</h4>
+
+<p>Not a chance and it doesn't matter because if old IE browsers are a target you need to be sure every <code>for/in</code> loop is guarded through <code>Object.prototype.hasOwnProperty</code> checks. Bear in mind you might want to ensure such loop won't fail with more modern engines and objects so feel free <a href="https://groups.google.com/forum/#!msg/jsmentors/cXeYNxKx-Ro/CZLiMKv2SoMJ">to read more about here</a>.</p>
       </section>
 
       <footer>
