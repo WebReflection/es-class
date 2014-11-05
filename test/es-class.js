@@ -2,6 +2,8 @@
 var Class = require('../build/es-class.node.js');
 //:remove
 
+var testIE9AndHigher = /*@cc_on 5.8<@_jscript_version&&@*/true;
+
 wru.test([
   {
     name: "main",
@@ -147,8 +149,7 @@ wru.test([
         );
       }
       var gOPD = Object.getOwnPropertyDescriptor;
-      // ignore IE8 for this test
-      if (/*@cc_on 5.8<@_jscript_version&&@*/gOPD) {
+      if (testIE9AndHigher && gOPD) {
         var A = Class({
           'static': {A: 'a'},
           a: 'a'
@@ -363,6 +364,10 @@ wru.test([
       c.holed();
       wru.assert('holed method', holed);
       wru.assert('B has no holed method', !B.prototype.hasOwnProperty('holed'));
+      var gOPD = Object.getOwnPropertyDescriptor;
+      if (testIE9AndHigher && gOPD) {
+        wru.assert('non enumerable', !gOPD(c, 'super').enumerable);
+      }
     }
   }, {
     name: 'properties can be redefined',
