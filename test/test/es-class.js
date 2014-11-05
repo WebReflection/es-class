@@ -2,6 +2,12 @@
 var Class = require('../build/es-class.node.js');
 //:remove
 
+var testIE9AndHigher = /*@cc_on 5.8<@_jscript_version&&@*/true;
+
+if (typeof console === 'undefined') {
+  console = {};
+}
+
 wru.test([
   {
     name: "main",
@@ -147,8 +153,7 @@ wru.test([
         );
       }
       var gOPD = Object.getOwnPropertyDescriptor;
-      // ignore IE8 for this test
-      if (/*@cc_on 5.8<@_jscript_version&&@*/gOPD) {
+      if (testIE9AndHigher && gOPD) {
         var A = Class({
           'static': {A: 'a'},
           a: 'a'
@@ -308,9 +313,6 @@ wru.test([
     name: 'throws on duplicated',
     test: function () {
       var message;
-      if (typeof console === 'undefined') {
-        console = {};
-      }
       console.warn = function (warning) {
         message = warning;
       };
@@ -363,6 +365,59 @@ wru.test([
       c.holed();
       wru.assert('holed method', holed);
       wru.assert('B has no holed method', !B.prototype.hasOwnProperty('holed'));
+      var gOPD = Object.getOwnPropertyDescriptor;
+      if (testIE9AndHigher && gOPD) {
+        wru.assert('non enumerable', !gOPD(c, 'super').enumerable);
+      }
+    }
+  }, {
+    name: 'properties can be redefined',
+    test: function () {
+      var A = Class({
+        property: 1
+      });
+      var a = new A;
+      wru.assert('access without problems', 1 == a.property++);
+      wru.assert('increments without problems', 2 == a.property++);
+      wru.assert('A.prototype.property is same', A.prototype.property === 1);
+      wru.assert('property is own', a.hasOwnProperty('property'));
+      wru.assert('property is enumerable', a.propertyIsEnumerable('property'));
+    }
+  }, {
+    name: 'implements',
+    test: function () {
+      var messages = [];
+      console.warn = function (warning) {
+        messages.push(warning);
+      };
+      var A = Class({
+        'implements': {
+          method1: function () {},
+          mathod2: function () {}
+        },
+        mathod2: function () {}
+      });
+
+      wru.assert('only one warning', messages.length === 1);
+      wru.assert('expected message', messages[0] === 'method1 is not implemented');
+
+      var B = Class({
+        'extends': A
+      });
+
+      wru.assert('still only one warning', messages.length === 1);
+
+      var C = Class({
+        'extends': B,
+        'implements': [
+          {a: Object},
+          {b: Object}
+        ],
+        a: Object
+      });
+
+      wru.assert('expected message', messages[1] === 'b is not implemented');
+
     }
   }
 ]);
