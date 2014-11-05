@@ -364,5 +364,18 @@ wru.test([
       wru.assert('holed method', holed);
       wru.assert('B has no holed method', !B.prototype.hasOwnProperty('holed'));
     }
+  }, {
+    name: 'properties can be redefined',
+    test: function () {
+      var A = Class({
+        property: 1
+      });
+      var a = new A;
+      wru.assert('access without problems', 1 == a.property++);
+      wru.assert('increments without problems', 2 == a.property++);
+      wru.assert('A.prototype.property is same', A.prototype.property === 1);
+      wru.assert('property is own', a.hasOwnProperty('property'));
+      wru.assert('property is enumerable', a.propertyIsEnumerable('property'));
+    }
   }
 ]);

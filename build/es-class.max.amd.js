@@ -96,18 +96,6 @@ var Class = Class || (function (Object) {
     return init;
   }
 
-  function isNotASpecialKey(key, allowInit) {
-    return  key !== CONSTRUCTOR &&
-            key !== EXTENDS &&
-            key !== WITH &&
-            key !== STATIC &&
-            // Blackberry 7 and old WebKit bug only:
-            //  user defined functions have
-            //  enumerable prototype and constructor
-            key !== PROTOTYPE &&
-            (allowInit || key !== INIT);
-  }
-
   // configure enumerable source properties in the target
   function copyEnumerables(source, target, inherits, publicStatic, allowInit) {
     var key, i;
@@ -142,18 +130,16 @@ var Class = Class || (function (Object) {
     });
   }
 
-  function wrap(inherits, target, key, value, publicStatic) {
-    return function () {
-      var
-        current = this[SUPER],
-        result = value.apply(
-          define(this, SUPER, inherits[key], publicStatic),
-          arguments
-        )
-      ;
-      define(this, SUPER, current, publicStatic);
-      return result;
-    };
+  function isNotASpecialKey(key, allowInit) {
+    return  key !== CONSTRUCTOR &&
+            key !== EXTENDS &&
+            key !== WITH &&
+            key !== STATIC &&
+            // Blackberry 7 and old WebKit bug only:
+            //  user defined functions have
+            //  enumerable prototype and constructor
+            key !== PROTOTYPE &&
+            (allowInit || key !== INIT);
   }
 
   // set a property via defineProperty using a common descriptor
@@ -170,6 +156,23 @@ var Class = Class || (function (Object) {
       }
     }
     return define(target, key, value, publicStatic);
+  }
+
+  function wrap(inherits, target, key, method, publicStatic) {
+    return function () {
+      if (!hOP.call(this, SUPER)) {
+        // define it once in order to use
+        // fast assignment every other time
+        define(this, SUPER, null, publicStatic);
+      }
+      var
+        previous = this[SUPER],
+        current = (this[SUPER] = inherits[key]),
+        result = method.apply(this, arguments)
+      ;
+      this[SUPER] = previous;
+      return result;
+    };
   }
 
   // Class({ ... })
