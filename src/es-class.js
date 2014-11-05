@@ -8,6 +8,7 @@ var Class = Class || (function (Object) {
     CONSTRUCTOR = 'constructor',
     EXTENDS = 'extends',
     WITH = 'with',
+    IMPLEMENTS = 'implements',
     INIT = 'init',
     PROTOTYPE = 'prototype',
     STATIC = 'static',
@@ -57,7 +58,6 @@ var Class = Class || (function (Object) {
   }
 
   // copy all imported enumerable methods and properties
-  // throws if there is any duplicated name in the prototype
   function addMixins(mixins, target, inherits) {
     for (var
       source,
@@ -79,11 +79,7 @@ var Class = Class || (function (Object) {
     for (key in source) {
       if (isNotASpecialKey(key, allowInit) && hOP.call(source, key)) {
         if (hOP.call(target, key)) {
-          try {
-            console.warn('duplicated: ' + key);
-          } catch(meh) {
-            /*\_(ツ)_*/
-          }
+          warn('duplicated: ' + key);
         }
         setProperty(inherits, target, key, source[key], publicStatic);
       }
@@ -110,12 +106,14 @@ var Class = Class || (function (Object) {
   function isNotASpecialKey(key, allowInit) {
     return  key !== CONSTRUCTOR &&
             key !== EXTENDS &&
-            key !== WITH &&
-            key !== STATIC &&
+            key !== IMPLEMENTS &&
             // Blackberry 7 and old WebKit bug only:
             //  user defined functions have
             //  enumerable prototype and constructor
             key !== PROTOTYPE &&
+            key !== STATIC &&
+            key !== SUPER &&
+            key !== WITH &&
             (allowInit || key !== INIT);
   }
 
@@ -133,6 +131,29 @@ var Class = Class || (function (Object) {
       }
     }
     return define(target, key, value, publicStatic);
+  }
+
+  function verifyImplementations(interfaces, target) {
+    for (var
+      current,
+      key,
+      i = 0; i < interfaces.length; i++
+    ) {
+      current = interfaces[i];
+      for (key in current) {
+        if (hOP.call(current, key) && !hOP.call(target, key)) {
+          warn(key + ' is not implemented');
+        }
+      }
+    }
+  }
+
+  function warn(message) {
+    try {
+      console.warn(message);
+    } catch(meh) {
+      /*\_(ツ)_*/
+    }
   }
 
   function wrap(inherits, target, key, method, publicStatic) {
@@ -197,6 +218,9 @@ var Class = Class || (function (Object) {
     }
     // enrich the prototype
     copyEnumerables(description, prototype, inherits, false, true);
+    if (hOP.call(description, IMPLEMENTS)) {
+      verifyImplementations([].concat(description[IMPLEMENTS]), prototype);
+    }
     return constructor;
   };
 

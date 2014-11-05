@@ -4,6 +4,10 @@ var Class = require('../build/es-class.node.js');
 
 var testIE9AndHigher = /*@cc_on 5.8<@_jscript_version&&@*/true;
 
+if (typeof console === 'undefined') {
+  console = {};
+}
+
 wru.test([
   {
     name: "main",
@@ -309,9 +313,6 @@ wru.test([
     name: 'throws on duplicated',
     test: function () {
       var message;
-      if (typeof console === 'undefined') {
-        console = {};
-      }
       console.warn = function (warning) {
         message = warning;
       };
@@ -381,6 +382,42 @@ wru.test([
       wru.assert('A.prototype.property is same', A.prototype.property === 1);
       wru.assert('property is own', a.hasOwnProperty('property'));
       wru.assert('property is enumerable', a.propertyIsEnumerable('property'));
+    }
+  }, {
+    name: 'implements',
+    test: function () {
+      var messages = [];
+      console.warn = function (warning) {
+        messages.push(warning);
+      };
+      var A = Class({
+        'implements': {
+          method1: function () {},
+          mathod2: function () {}
+        },
+        mathod2: function () {}
+      });
+
+      wru.assert('only one warning', messages.length === 1);
+      wru.assert('expected message', messages[0] === 'method1 is not implemented');
+
+      var B = Class({
+        'extends': A
+      });
+
+      wru.assert('still only one warning', messages.length === 1);
+
+      var C = Class({
+        'extends': B,
+        'implements': [
+          {a: Object},
+          {b: Object}
+        ],
+        a: Object
+      });
+
+      wru.assert('expected message', messages[1] === 'b is not implemented');
+
     }
   }
 ]);
