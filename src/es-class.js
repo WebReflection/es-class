@@ -34,9 +34,13 @@ var Class = Class || (function (Object) {
     create = Object.create || function (proto) {
       /*jshint newcap: false */
       var isInstance = this instanceof create;
-      create[PROTOTYPE] = isInstance ? null : proto;
+      create[PROTOTYPE] = isInstance ? createPrototype : proto;
       return isInstance ? this : new create();
     },
+
+    // very old browsers actually work better
+    // without assigning null as prototype
+    createPrototype = create[PROTOTYPE],
 
     // redefined if not present
     defineProperty = Object.defineProperty,
