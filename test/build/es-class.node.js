@@ -67,9 +67,18 @@ var Class = Class || (function (Object) {
     // redefined if not present
     defineProperty = Object.defineProperty,
 
-    superRegExp = /create/.test(function () {
-      create();
+    superRegExp = /\bsuper\b/.test(function () {
+      // this test should nevers be minifier sensistive
+      this['super']();
     }) ? /\bsuper\b/ : /.*/
+    // In 2010 Opera 10.5 for Linux Debian 6
+    // goes nut with methods to string representation,
+    // truncating pieces of text in an unpredictable way.
+    // If you are targeting such browser
+    // be aware that super invocation might fail.
+    // This is the only exception I could find
+    // from year 2000 to modern days browsers
+    // plus everything else would work just fine.
 
   ;
 
