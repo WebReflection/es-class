@@ -32,6 +32,19 @@ wru.test([
       new A;
       new B;
       wru.assert('C#constructor === C', (new C).constructor === C);
+      var X = Class({
+        constructor: function A(value) {
+          X.initialized = value;
+        }
+      });
+      var Y = Class({
+        'extends': X,
+        constructor: function () {
+          this['super'](123);
+        }
+      });
+      var y = new Y;
+       wru.assert('constructor.super', X.initialized === 123);
     }
   }, {
     name: 'extends',
@@ -418,6 +431,72 @@ wru.test([
 
       wru.assert('expected message', messages[1] === 'b is not implemented');
 
+    }
+  }, {
+    name: 'all together',
+    test: function () {
+      var A = Class({
+        'static': {A: 'A'},
+        'with': {
+          init: function () {
+            this._a = true;
+          },
+          _a: false
+        },
+        a: 'a'
+      });
+      var B = Class({
+        'static': {B: 'B'},
+        'extends': A,
+        constructor: function () {
+          this['super']();
+        },
+        b: 'b'
+      });
+      var C = Class({
+        'static': {C: 'C'},
+        'extends': B,
+        'with': {
+          init: function () {
+            this._c = true;
+          },
+          _c: false
+        },
+        constructor: function () {
+          this['super']();
+        },
+        c: 'c'
+      });
+      var c = new C;
+      wru.assert('statics',
+        C.A === 'A' &&
+        C.B === 'B' &&
+        C.C === 'C' &&
+        C.hasOwnProperty('A') &&
+        C.hasOwnProperty('B') &&
+        C.hasOwnProperty('C')
+      );
+      wru.assert('extends',
+        c instanceof A &&
+        c instanceof B &&
+        c instanceof C
+      );
+      wru.assert('with',
+        c._a &&
+        c._c &&
+        c.hasOwnProperty('_a') &&
+        c.hasOwnProperty('_c')
+      );
+      wru.assert('properties',
+        c.a === 'a' &&
+        c.b === 'b' &&
+        c.c === 'c'
+      );
+      wru.assert('constructors',
+        A.prototype.constructor === A &&
+        B.prototype.constructor === B &&
+        C.prototype.constructor === C
+      );
     }
   }
 ]);
