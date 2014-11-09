@@ -1,6 +1,4 @@
 
-WITH = 'with',
-
 IMPLEMENTS = 'implements',
 STATIC = 'static',
 
@@ -25,6 +23,24 @@ var origin = new Point(0, 0);
 var Base = Class({});
 var b = new Base();
 ```
+
+When a `constructor` is omitted, one is created and assigned by default. If the class is extending, such constructor will implicitly invoke its super with received arguments and it will return the optional content.
+
+```js
+var Person = Class({
+  constructor: function (name) {
+    this.name = name;
+  }
+});
+
+var Employee = Class({
+  extends: Person
+});
+
+var me = new Employee('Andrea');
+me.name; // "Andrea"
+```
+
 
 #### tips: using named function expressions
 For an improved debugging experience during development, using named function expressions is highly recommended for both `constructor` or any other generic method.
@@ -181,9 +197,100 @@ var Application = Class({
 
 ```
 
-Similar to what the deprecated `with` keyboard actually does, every instance of `Application` will automatically have, through the prototype chain, all methods and properties defined in `EventEmitter` and `WebServer`.
+Similar to what the deprecated `with` keyword actually does, every instance of `Application` will automatically have, through the prototype chain, all methods and properties defined in `EventEmitter` and `WebServer`.
 
 The optional `init` method will be executed, if present, right before the `constructor` in oder to have an already set instance with everything needed and expected to operate.
 
-#### more details about with and this implementation
- - - coming soon - - 
+
+### static
+Every class can have one or more static definitions.
+```js
+var Panel = Class({
+  static: {
+    SCROLLABLE: true
+  }
+});
+
+var Page = Class({
+  extends: Panel,
+  static: {
+    RESIZABLE: true
+  }
+});
+```
+`Page` will have both `SCROLLABLE` and `RESIZABLE` as own public static properties. These properties are defined as such:
+```js
+// public static descriptor
+{
+  enumerable: true,
+  configurable: false,
+  writable: false
+}
+```
+
+
+### implements
+Every class can implement one or more interfaces. These will be checked at definition time only and warn in case something is missing.
+```js
+// interface iMouse
+var iMouse = {
+  // describes expected methods
+  moveTo: function (x, y) {
+    // it could be used for documentation purpose too
+  },
+  scrollTo: function (value) {}
+};
+
+var MyMouse = Class({
+  implements: iMouse,
+  constructor: function () {
+    this.cursor = {x: 0, y: 0};
+    this.scroll = 0;
+  },
+  moveTo: function (x, y) {
+    this.cursor.x = x;
+    this.cursor.y = y;
+  }
+  // omitting scrollTo method
+});
+
+// warning: scrollTo is not implemented 
+```
+Please bear in mind that this property is very permissive and lightweight and its main purpose is to give, eventually, an extra semantic meaning to a class definition.
+
+No arity, property type, type of arguments, or complicated things are verified: simply the property name.
+
+
+### prototype
+Every property in the prototype will be defined as such:
+```js
+// prototype own properties descriptor
+{
+  enumerable: false,
+  configurable: true,
+  writable: true
+}
+```
+This ensure no `for/in` loop conflicts or accidental methods exposure. Please bear in mind as soon as a property will be defined in an instance this will be enumerable unless defined through a descriptor.
+
+#### tips: enumerable defaults
+In case non enumerable default values are needed, this pattern works fine:
+```js
+var Point2D = Class({
+  x: 0,
+  y: 0
+});
+
+var p = new Point2D;
+p.x; // 0
+p.y; // 0
+```
+However, if these properties are meant to be publicly available, there is no concrete advantage in defining them in the prototype, while a constructor would work just fine:
+```js
+var Point2D = Class({
+  constructor: function () {
+    this.x = 0;
+    this.y = 0;
+  }
+});
+```
