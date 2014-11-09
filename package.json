@@ -1,5 +1,5 @@
 {
-  "version": "0.5.3",
+  "version": "0.6.0",
   "license": "MIT",
   "name": "es-class",
   "description": "ECMAScript 3 to latest compatible Class definition",

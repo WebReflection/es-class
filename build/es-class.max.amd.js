@@ -213,13 +213,19 @@ var Class = Class || (function (Object) {
   return function (description) {
     var
       hasConstructor = hOP.call(description, CONSTRUCTOR),
-      constructor = hasConstructor ?
-        description[CONSTRUCTOR] : function Class() {},
       hasParent = hOP.call(description, EXTENDS),
-      hasSuper = hasParent && hasConstructor && superRegExp.test(constructor),
       parent = hasParent && description[EXTENDS],
-      inherits = hasParent && typeof parent === 'function' ?
-        parent[PROTOTYPE] : parent,
+      hasParentPrototype = hasParent && typeof parent === 'function',
+      inherits = hasParentPrototype ? parent[PROTOTYPE] : parent,
+      constructor = hasConstructor ?
+        description[CONSTRUCTOR] : (
+          hasParent && hasParentPrototype ?
+            function Class() {
+              return parent.apply(this, arguments);
+            } :
+            function Class() {}
+        ),
+      hasSuper = hasParent && hasConstructor && superRegExp.test(constructor),
       prototype = hasParent ? create(inherits) : constructor[PROTOTYPE],
       mixins,
       length

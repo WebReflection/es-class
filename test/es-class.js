@@ -448,9 +448,6 @@ wru.test([
       var B = Class({
         'static': {B: 'B'},
         'extends': A,
-        constructor: function () {
-          this['super']();
-        },
         b: 'b'
       });
       var C = Class({
@@ -461,9 +458,6 @@ wru.test([
             this._c = true;
           },
           _c: false
-        },
-        constructor: function () {
-          this['super']();
         },
         c: 'c'
       });
