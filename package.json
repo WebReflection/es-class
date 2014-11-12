@@ -1,20 +1,21 @@
 {
-  "version": "0.6.0",
+  "version": "0.6.1",
   "license": "MIT",
   "name": "es-class",
-  "description": "ECMAScript 3 to latest compatible Class definition",
+  "description": "A future proof, backward compatible, JavaScript class utility.",
   "homepage": "https://github.com/WebReflection/es-class",
   "keywords": [
     "ES3",
     "ES5",
     "ES6",
+    "ES7",
     "KISS",
     "Class",
     "inheritance",
     "prototypal",
     "prototype",
     "simple",
-    "basic"
+    "lightweight"
   ],
   "author": {
     "name": "Andrea Giammarchi",

@@ -130,6 +130,7 @@ var Class = Class || (function (Object) {
     }
   }
 
+  // common defineProperty wrapper based on publicStatic value
   function define(target, key, value, publicStatic) {
     return defineProperty(target, key, {
       enumerable: publicStatic,
@@ -139,6 +140,7 @@ var Class = Class || (function (Object) {
     });
   }
 
+  // verifies a key is not special for the class
   function isNotASpecialKey(key, allowInit) {
     return  key !== CONSTRUCTOR &&
             key !== EXTENDS &&
@@ -169,6 +171,8 @@ var Class = Class || (function (Object) {
     return define(target, key, value, publicStatic);
   }
 
+  // basic check against expected properties or methods
+  // used when `implements` is used
   function verifyImplementations(interfaces, target) {
     for (var
       current,
@@ -184,6 +188,9 @@ var Class = Class || (function (Object) {
     }
   }
 
+  // warn if something doesn't look right
+  // such overwritten public statics
+  // or traits / mixins assigning twice same thing
   function warn(message) {
     try {
       console.warn(message);
@@ -192,6 +199,8 @@ var Class = Class || (function (Object) {
     }
   }
 
+  // lightweight wrapper for methods that requires
+  // .super(...) invokaction - inspired by old klass.js
   function wrap(inherits, key, method, publicStatic) {
     return function () {
       if (!hOP.call(this, SUPER)) {
@@ -209,7 +218,7 @@ var Class = Class || (function (Object) {
     };
   }
 
-  // Class({ ... })
+  // the actual Class({ ... }) definition
   return function (description) {
     var
       hasConstructor = hOP.call(description, CONSTRUCTOR),
