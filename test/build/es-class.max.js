@@ -29,12 +29,12 @@ var Class = Class || (function (Object) {
     // shortcuts for minifiers and ES3 private keywords too
     CONSTRUCTOR = 'constructor',
     EXTENDS = 'extends',
-    WITH = 'with',
     IMPLEMENTS = 'implements',
     INIT = 'init',
     PROTOTYPE = 'prototype',
     STATIC = 'static',
     SUPER = 'super',
+    WITH = 'with',
 
     // used to copy non enumerable properties on IE
     nonEnumerables = [
@@ -162,7 +162,7 @@ var Class = Class || (function (Object) {
       }
     } else {
       if (typeof value === 'function' && superRegExp.test(value)) {
-        value = wrap(inherits, target, key, value, publicStatic);
+        value = wrap(inherits, key, value, publicStatic);
       }
     }
     return define(target, key, value, publicStatic);
@@ -191,7 +191,7 @@ var Class = Class || (function (Object) {
     }
   }
 
-  function wrap(inherits, target, key, method, publicStatic) {
+  function wrap(inherits, key, method, publicStatic) {
     return function () {
       if (!hOP.call(this, SUPER)) {
         // define it once in order to use
@@ -212,31 +212,27 @@ var Class = Class || (function (Object) {
   return function (description) {
     var
       hasConstructor = hOP.call(description, CONSTRUCTOR),
-      constructor = hasConstructor ?
-        description[CONSTRUCTOR] : function Class() {},
       hasParent = hOP.call(description, EXTENDS),
       parent = hasParent && description[EXTENDS],
-      inherits = hasParent && typeof parent === 'function' ?
-        parent[PROTOTYPE] : parent,
-      prototype = hasParent ?
-        setProperty(inherits, create(inherits), CONSTRUCTOR, constructor, false) :
-        constructor[PROTOTYPE],
+      hasParentPrototype = hasParent && typeof parent === 'function',
+      inherits = hasParentPrototype ? parent[PROTOTYPE] : parent,
+      constructor = hasConstructor ?
+        description[CONSTRUCTOR] : (
+          hasParent && hasParentPrototype ?
+            function Class() {
+              return parent.apply(this, arguments);
+            } :
+            function Class() {}
+        ),
+      hasSuper = hasParent && hasConstructor && superRegExp.test(constructor),
+      prototype = hasParent ? create(inherits) : constructor[PROTOTYPE],
       mixins,
       length
     ;
-    if (hOP.call(description, STATIC)) {
-      // add new public static properties first
-      copyEnumerables(description[STATIC], constructor, inherits, true, true);
+    if (hasSuper) {
+      constructor = wrap(inherits, CONSTRUCTOR, constructor, false);
     }
-    if (hasParent) {
-      // in case it's a function
-      if (parent !== inherits) {
-        // copy possibly inherited statics too
-        copyEnumerables(parent, constructor, inherits, true, true);
-      }
-      constructor[PROTOTYPE] = prototype;
-    }
-    // add modules/mixins
+    // add modules/mixins (that might swap the constructor)
     if (hOP.call(description, WITH)) {
       mixins = addMixins([].concat(description[WITH]), prototype, inherits);
       length = mixins.length;
@@ -250,6 +246,21 @@ var Class = Class || (function (Object) {
         }(constructor));
         constructor[PROTOTYPE] = prototype;
       }
+    }
+    if (hOP.call(description, STATIC)) {
+      // add new public static properties first
+      copyEnumerables(description[STATIC], constructor, inherits, true, true);
+    }
+    if (hasParent) {
+      // in case it's a function
+      if (parent !== inherits) {
+        // copy possibly inherited statics too
+        copyEnumerables(parent, constructor, inherits, true, true);
+      }
+      constructor[PROTOTYPE] = prototype;
+    }
+    if (prototype[CONSTRUCTOR] !== constructor) {
+      define(prototype, CONSTRUCTOR, constructor, false);
     }
     // enrich the prototype
     copyEnumerables(description, prototype, inherits, false, true);
