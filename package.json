@@ -24,7 +24,7 @@
     "type": "git",
     "url": "git://github.com/WebReflection/es-class.git"
   },
-  "main": "./build/es-class.node.js",
+  "main": "./build/es-class.npm.js",
   "scripts": {
     "test": "node test/.test.js"
   },

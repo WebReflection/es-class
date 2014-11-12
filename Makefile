@@ -38,7 +38,7 @@ var:
 # build node.js version
 node:
 	mkdir -p build
-	cat template/license.before LICENSE.txt template/license.after template/node.before $(NODE) template/node.after >build/$(REPO).node.js
+	cat template/license.before LICENSE.txt template/license.after template/node.before $(NODE) template/node.after >build/$(REPO).npm.js
 
 # build AMD version
 amd:

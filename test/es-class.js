@@ -1,5 +1,5 @@
 //remove:
-var Class = require('../build/es-class.node.js');
+var Class = require('../build/es-class.npm.js');
 //:remove
 
 var testIE9AndHigher = /*@cc_on 5.8<@_jscript_version&&@*/true;
