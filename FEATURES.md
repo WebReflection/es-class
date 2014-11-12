@@ -1,8 +1,3 @@
-
-IMPLEMENTS = 'implements',
-STATIC = 'static',
-
-
 ### constructor
 If specified will be the well known, ES3 compatible, implicit initializer of each `new` instance.
 

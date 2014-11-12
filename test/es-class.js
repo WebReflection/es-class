@@ -493,4 +493,50 @@ wru.test([
       );
     }
   }
+  /*
+  ,{
+    name: 'protected mixin',
+    test: function() {
+      var hiddenProperties = {
+        init: function () {
+          var
+            descriptor = {
+              enumerable: false,
+              configurable: true,
+              writable: true,
+              value: null
+            },
+            has = Object.hasOwnProperty,
+            gOPN = Object.getOwnPropertyNames,
+            gPO = Object.getPrototypeOf,
+            dP = Object.defineProperty,
+            self = this,
+            proto = self,
+            keys,
+            key,
+            i
+          ;
+          while (proto) {
+            keys = gOPN(proto);
+            i = 0;
+            while (i < keys.length) {
+              key = keys[i++];
+              if (key.charAt(0) === '_' && !has.call(self, key)) {
+                descriptor.value = self[key];
+                dP(self, key, descriptor);
+              }
+            }
+            descriptor.value = null;
+            proto = gPO(proto);
+          }
+        }
+      };
+      var A = Class({
+        with: hiddenProperties,
+        _a: 'a'
+      });
+      var a = new A;
+    }
+  }
+  */
 ]);
