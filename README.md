@@ -6,9 +6,9 @@ es-class
 
 ### A future proof, backward compatible, JavaScript class utility.
 
-  * **ES6** and **ES7** friendly, through semantic `extends` and `constructor` plus other previously discussed features
-  * **ES5** natively compatible granting that what you see is what you wrote, without needing intermediate transpilers
-  * **ES3** backward compatible, thanks to common minification that will create a safe production code, wrapping keywords that once upon a time were reserved
+  * **ES6** and **ES7** friendly, through semantic `extends` and `constructor` plus other features
+  * **ES5** natively compatible granting that what you write is what you get
+  * **ES3** backward compatible, thanks to common minifiers that will make production code safe
 
 Feel free to [test all features](http://webreflection.github.io/es-class/test/) related to this project, and please come back if your browser is not green.
 
