@@ -53,23 +53,23 @@ Following a summary:
 This is an example of what's possible:
 ```js
 var Engineer = Class({
-  constructor: function (name, age, type) {
-    this.super(name, age);
-    this.type = type;
-  },
   extends: Person,
   with: [
     eventEmitter,
     growingEachYear,
     carrierPath
   ],
+  implements: [
+    iWorker
+  ],
   static: {
     SOFTWARE: 0,
     CONSTRUCTIONS: 1
   },
-  implements: [
-    iWorker
-  ]
+  constructor: function (name, age, type) {
+    this.super(name, age);
+    this.type = type;
+  }
 });
 
 var me = new Engineer(
