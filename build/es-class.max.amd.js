@@ -68,8 +68,12 @@ var Class = Class || (function (Object) {
     // redefined if not present
     defineProperty = Object.defineProperty,
 
+    gOPD = Object.getOwnPropertyDescriptor || function (object, key) {
+        return {value: object[key]};
+    },
+
     superRegExp = /\bsuper\b/.test(function () {
-      // this test should nevers be minifier sensistive
+      // this test should never be minifier sensistive
       this['super']();
     }) ? /\bsuper\b/ : /.*/
     // In 2010 Opera 10.5 for Linux Debian 6
@@ -117,14 +121,14 @@ var Class = Class || (function (Object) {
         if (hOP.call(target, key)) {
           warn('duplicated: ' + key);
         }
-        setProperty(inherits, target, key, source[key], publicStatic);
+        setProperty(inherits, target, key, gOPD(source, key), publicStatic);
       }
     }
     if (hasIEEnumerableBug) {
       for (i = 0; i < nonEnumerables.length; i++) {
         key = nonEnumerables[i];
         if (hOP.call(source, key)) {
-          setProperty(inherits, target, key, source[key], publicStatic);
+          setProperty(inherits, target, key, gOPD(source, key), publicStatic);
         }
       }
     }
@@ -132,7 +136,7 @@ var Class = Class || (function (Object) {
 
   // common defineProperty wrapper based on publicStatic value
   function define(target, key, value, publicStatic) {
-    return defineProperty(target, key, {
+    defineProperty(target, key, {
       enumerable: publicStatic,
       configurable: !publicStatic,
       writable: !publicStatic,
@@ -158,17 +162,27 @@ var Class = Class || (function (Object) {
   // set a property via defineProperty using a common descriptor
   // only if properties where not defined yet.
   // If publicStatic is true, properties are both non configurable and non writable
-  function setProperty(inherits, target, key, value, publicStatic) {
+  function setProperty(inherits, target, key, descriptor, publicStatic) {
+    var
+      hasValue = hOP.call(descriptor, 'value'),
+      value
+    ;
     if (publicStatic) {
       if (hOP.call(target, key)) {
-        return target;
+        return;
       }
-    } else {
+    } else if (hasValue) {
+      value = descriptor.value;
       if (typeof value === 'function' && superRegExp.test(value)) {
-        value = wrap(inherits, key, value, publicStatic);
+        descriptor.value = wrap(inherits, key, value, publicStatic);
       }
     }
-    return define(target, key, value, publicStatic);
+    descriptor.enumerable = publicStatic;
+    descriptor.configurable = !publicStatic;
+    if (hasValue) {
+      descriptor.writable = !publicStatic;
+    }
+    defineProperty(target, key, descriptor);
   }
 
   // basic check against expected properties or methods

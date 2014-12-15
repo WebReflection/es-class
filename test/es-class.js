@@ -183,6 +183,41 @@ wru.test([
         check(B.prototype, 'b', 'b', false);
       }
     }
+  },{
+    name: 'supports getters',
+    test: function () {
+      var gOPD = Object.getOwnPropertyDescriptor;
+      if (testIE9AndHigher && gOPD) {
+        var A = Class(Object.defineProperty({}, 'test', {
+          enumerable: true,
+          get: function () {
+            return 123;
+          }
+        }));
+        var tmp = gOPD(A.prototype, 'test');
+        wru.assert('checking A#test',
+          !!tmp.enumerable === false &&
+          !!tmp.configurable === true &&
+          typeof tmp.get === 'function' &&
+          (new A).test === 123
+        );
+        var B = Class({
+          'static': Object.defineProperty({}, 'test', {
+            enumerable: true,
+            get: function () {
+              return 456;
+            }
+          })
+        });
+        var tmp = gOPD(B, 'test');
+        wru.assert('checking B.test',
+          !!tmp.enumerable === true &&
+          !!tmp.configurable === false &&
+          typeof tmp.get === 'function' &&
+          B.test === 456
+        );
+      }
+    }
   }, {
     name: 'supports non quoted properties',
     test: function () {
