@@ -45,6 +45,8 @@ var Class = Class || (function (Object) {
     // redefined if not present
     defineProperty = Object.defineProperty,
 
+    // basic ad-hoc private fallback for old browsers
+    // use es5-shim if you want a properly patched Object.create polyfill
     gOPD = Object.getOwnPropertyDescriptor || function (object, key) {
         return {value: object[key]};
     },
@@ -153,6 +155,9 @@ var Class = Class || (function (Object) {
       if (typeof value === 'function' && superRegExp.test(value)) {
         descriptor.value = wrap(inherits, key, value, publicStatic);
       }
+    } else {
+      wrapGetOrSet(inherits, key, descriptor, 'get');
+      wrapGetOrSet(inherits, key, descriptor, 'set');
     }
     descriptor.enumerable = publicStatic;
     descriptor.configurable = !publicStatic;
@@ -207,6 +212,18 @@ var Class = Class || (function (Object) {
       this[SUPER] = previous;
       return result;
     };
+  }
+
+  // get/set shortcut for the eventual wrapper
+  function wrapGetOrSet(inherits, key, descriptor, gs, publicStatic) {
+    if (hOP.call(descriptor, gs) && superRegExp.test(descriptor[gs])) {
+      descriptor[gs] = wrap(
+        gOPD(inherits, key),
+        gs,
+        descriptor[gs],
+        publicStatic
+      );
+    }
   }
 
   // the actual Class({ ... }) definition

@@ -527,6 +527,19 @@ wru.test([
         C.prototype.constructor === C
       );
     }
+  }, {
+    name: 'super getter and super setter',
+    test: function () {
+      if (testIE9AndHigher) {
+        var rnd = Math.random();
+        var A = Function('Class,v', 'return Class({get prop() {return v},set prop(x) {v=x}})')(Class, rnd);
+        var B = Function('Class,A', 'return Class({extends:A,get prop() {return this.super()},set prop(x) {this.super(x)}})')(Class, A);
+        var o = new B;
+        wru.assert(o.prop === rnd);
+        o.prop = '---';
+        wru.assert(o.prop === '---');
+      }
+    }
   }
   /*
   ,{
