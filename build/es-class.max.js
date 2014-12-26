@@ -258,7 +258,7 @@ var Class = Class || (function (Object) {
       inherits = hasParentPrototype ? parent[PROTOTYPE] : parent,
       constructor = hasConstructor ?
         description[CONSTRUCTOR] : (
-          hasParent && hasParentPrototype ?
+          hasParentPrototype ?
             function Class() {
               return parent.apply(this, arguments);
             } :
