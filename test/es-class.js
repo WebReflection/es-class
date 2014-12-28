@@ -554,7 +554,9 @@ wru.test([
         'static': {
           VALUE: Math.PI,
           method: method
-        }
+        },
+        VALUE: 123,
+        method: function() {}
       });
       wru.assert('VALUE has been set', A.VALUE === Math.PI);
       wru.assert('method has been set', A.method === method);
@@ -563,6 +565,10 @@ wru.test([
         wru.assert('VALUE is non writable', !gOPD(A, 'VALUE').writable);
         wru.assert('method is configurable', gOPD(A, 'method').configurable);
         wru.assert('method is writable', gOPD(A, 'method').writable);
+        wru.assert('a.VALUE is configurable', gOPD(A.prototype, 'VALUE').configurable);
+        wru.assert('a.VALUE is writable', gOPD(A.prototype, 'VALUE').writable);
+        wru.assert('a.method is configurable', gOPD(A.prototype, 'method').configurable);
+        wru.assert('a.method is writable', gOPD(A.prototype, 'method').writable);
       }
     }
   }
