@@ -545,51 +545,25 @@ wru.test([
         wru.assert(o.prop === '---');
       }
     }
-  }
-  /*
-  ,{
-    name: 'protected mixin',
+  },{
+    name: 'constants VS methods',
     test: function() {
-      var hiddenProperties = {
-        init: function () {
-          var
-            descriptor = {
-              enumerable: false,
-              configurable: true,
-              writable: true,
-              value: null
-            },
-            has = Object.hasOwnProperty,
-            gOPN = Object.getOwnPropertyNames,
-            gPO = Object.getPrototypeOf,
-            dP = Object.defineProperty,
-            self = this,
-            proto = self,
-            keys,
-            key,
-            i
-          ;
-          while (proto) {
-            keys = gOPN(proto);
-            i = 0;
-            while (i < keys.length) {
-              key = keys[i++];
-              if (key.charAt(0) === '_' && !has.call(self, key)) {
-                descriptor.value = self[key];
-                dP(self, key, descriptor);
-              }
-            }
-            descriptor.value = null;
-            proto = gPO(proto);
-          }
-        }
-      };
+      var gOPD = Object.getOwnPropertyDescriptor;
+      var method = function () {};
       var A = Class({
-        with: hiddenProperties,
-        _a: 'a'
+        'static': {
+          VALUE: Math.PI,
+          method: method
+        }
       });
-      var a = new A;
+      wru.assert('VALUE has been set', A.VALUE === Math.PI);
+      wru.assert('method has been set', A.method === method);
+      if (testIE9AndHigher) {
+        wru.assert('VALUE is non configurable', !gOPD(A, 'VALUE').configurable);
+        wru.assert('VALUE is non writable', !gOPD(A, 'VALUE').writable);
+        wru.assert('method is configurable', gOPD(A, 'method').configurable);
+        wru.assert('method is writable', gOPD(A, 'method').writable);
+      }
     }
   }
-  */
 ]);
