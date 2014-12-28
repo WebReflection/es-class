@@ -53,7 +53,7 @@ var Class = Class || (function (Object) {
     hOP = Object[nonEnumerables[0]],
 
     // basic ad-hoc private fallback for old browsers
-    // use es5-shim if you want a properly patched Object.create polyfill
+    // use es5-shim if you want a properly patched polyfill
     create = Object.create || function (proto) {
       /*jshint newcap: false */
       var isInstance = this instanceof create;
@@ -69,10 +69,34 @@ var Class = Class || (function (Object) {
     defineProperty = Object.defineProperty,
 
     // basic ad-hoc private fallback for old browsers
-    // use es5-shim if you want a properly patched Object.create polyfill
+    // use es5-shim if you want a properly patched polyfill
     gOPD = Object.getOwnPropertyDescriptor || function (object, key) {
         return {value: object[key]};
     },
+
+    // basic ad-hoc private fallback for old browsers
+    // use es5-shim if you want a properly patched polyfill
+    gOPN = Object.getOwnPropertyNames || function (object) {
+        var names = [], i, key;
+        for (key in object) {
+          if (hOP.call(object, key)) {
+            names.push(key);
+          }
+        }
+        if (hasIEEnumerableBug) {
+          for (i = 0; i < nonEnumerables.length; i++) {
+            key = nonEnumerables[i];
+            if (hOP.call(object, key)) {
+              names.push(key);
+            }
+          }
+        }
+        return names;
+    },
+
+    // used to avoid setting `arguments` and other function properties
+    // when public static are copied over
+    nativeFunctionOPN = new RegExp('^(?:' + gOPN(function () {}).join('|') + ')$'),
 
     superRegExp = /\bsuper\b/.test(function () {
       // this test should never be minifier sensistive
@@ -110,40 +134,47 @@ var Class = Class || (function (Object) {
       if (hOP.call(source, INIT)) {
         init.push(source[INIT]);
       }
-      copyEnumerables(source, target, inherits, false, false);
+      copyOwn(source, target, inherits, false, false);
     }
     return init;
   }
 
-  // configure enumerable source properties in the target
-  function copyEnumerables(source, target, inherits, publicStatic, allowInit) {
-    var key, i;
-    for (key in source) {
-      if (isNotASpecialKey(key, allowInit) && hOP.call(source, key)) {
+  // configure source own properties in the target
+  function copyOwn(source, target, inherits, publicStatic, allowInit) {
+    for (var
+      key,
+      noFunctionCheck = typeof source !== 'function',
+      names = gOPN(source),
+      i = 0; i < names.length; i++
+    ) {
+      key = names[i];
+      if (
+        (noFunctionCheck || !nativeFunctionOPN.test(key)) &&
+        isNotASpecialKey(key, allowInit)
+      ) {
         if (hOP.call(target, key)) {
           warn('duplicated: ' + key);
         }
         setProperty(inherits, target, key, gOPD(source, key), publicStatic);
       }
     }
-    if (hasIEEnumerableBug) {
-      for (i = 0; i < nonEnumerables.length; i++) {
-        key = nonEnumerables[i];
-        if (hOP.call(source, key)) {
-          setProperty(inherits, target, key, gOPD(source, key), publicStatic);
-        }
-      }
-    }
   }
 
-  // common defineProperty wrapper based on publicStatic value
+  // common defineProperty wrapper
   function define(target, key, value, publicStatic) {
+    var configurable = isConfigurable(key, publicStatic);
     defineProperty(target, key, {
-      enumerable: publicStatic,
-      configurable: !publicStatic,
-      writable: !publicStatic,
+      enumerable: false, // was: publicStatic,
+      configurable: configurable,
+      writable: configurable,
       value: value
     });
+  }
+
+  // is key is UPPER_CASE and the property is public static
+  // it will define the property as non configurable and non writable
+  function isConfigurable(key, publicStatic) {
+    return publicStatic ? !/^[A-Z_]+$/.test(key) : true;
   }
 
   // verifies a key is not special for the class
@@ -167,6 +198,7 @@ var Class = Class || (function (Object) {
   function setProperty(inherits, target, key, descriptor, publicStatic) {
     var
       hasValue = hOP.call(descriptor, 'value'),
+      configurable,
       value
     ;
     if (publicStatic) {
@@ -182,10 +214,11 @@ var Class = Class || (function (Object) {
       wrapGetOrSet(inherits, key, descriptor, 'get');
       wrapGetOrSet(inherits, key, descriptor, 'set');
     }
-    descriptor.enumerable = publicStatic;
-    descriptor.configurable = !publicStatic;
+    configurable = isConfigurable(key, publicStatic);
+    descriptor.enumerable = false; // was: publicStatic;
+    descriptor.configurable = configurable;
     if (hasValue) {
-      descriptor.writable = !publicStatic;
+      descriptor.writable = configurable;
     }
     defineProperty(target, key, descriptor);
   }
@@ -290,13 +323,13 @@ var Class = Class || (function (Object) {
     }
     if (hOP.call(description, STATIC)) {
       // add new public static properties first
-      copyEnumerables(description[STATIC], constructor, inherits, true, true);
+      copyOwn(description[STATIC], constructor, inherits, true, true);
     }
     if (hasParent) {
       // in case it's a function
       if (parent !== inherits) {
         // copy possibly inherited statics too
-        copyEnumerables(parent, constructor, inherits, true, true);
+        copyOwn(parent, constructor, inherits, true, true);
       }
       constructor[PROTOTYPE] = prototype;
     }
@@ -304,7 +337,7 @@ var Class = Class || (function (Object) {
       define(prototype, CONSTRUCTOR, constructor, false);
     }
     // enrich the prototype
-    copyEnumerables(description, prototype, inherits, false, true);
+    copyOwn(description, prototype, inherits, false, true);
     if (hOP.call(description, IMPLEMENTS)) {
       verifyImplementations([].concat(description[IMPLEMENTS]), prototype);
     }

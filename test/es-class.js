@@ -4,6 +4,10 @@ var Class = require('../build/es-class.npm.js');
 
 var testIE9AndHigher = /*@cc_on 5.8<@_jscript_version&&@*/true;
 
+function isConfigurable(key, publicStatic) {
+  return publicStatic ? !/^[A-Z_]+$/.test(key) : true;
+}
+
 if (typeof console === 'undefined') {
   console = {};
 }
@@ -158,10 +162,11 @@ wru.test([
     test: function () {
       function check(obj, prop, value, publicStatic) {
         var tmp = gOPD(obj, prop);
+        var configurable = isConfigurable(prop, publicStatic);
         wru.assert('checking ' + prop,
-          !!tmp.enumerable === publicStatic &&
-          !!tmp.configurable === !publicStatic &&
-          !!tmp.writable === !publicStatic &&
+          !!tmp.enumerable === false &&
+          !!tmp.configurable === configurable &&
+          !!tmp.writable === configurable &&
           tmp.value === value
         );
       }
@@ -189,7 +194,7 @@ wru.test([
       var gOPD = Object.getOwnPropertyDescriptor;
       if (testIE9AndHigher && gOPD) {
         var A = Class(Object.defineProperty({}, 'test', {
-          enumerable: true,
+          enumerable: false,
           get: function () {
             return 123;
           }
@@ -203,7 +208,7 @@ wru.test([
         );
         var B = Class({
           'static': Object.defineProperty({}, 'test', {
-            enumerable: true,
+            enumerable: false,
             get: function () {
               return 456;
             }
@@ -211,8 +216,8 @@ wru.test([
         });
         var tmp = gOPD(B, 'test');
         wru.assert('checking B.test',
-          !!tmp.enumerable === true &&
-          !!tmp.configurable === false &&
+          !!tmp.enumerable === false &&
+          !!tmp.configurable === true &&
           typeof tmp.get === 'function' &&
           B.test === 456
         );
