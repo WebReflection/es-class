@@ -4,6 +4,10 @@ var Class = require('../build/es-class.npm.js');
 
 var testIE9AndHigher = /*@cc_on 5.8<@_jscript_version&&@*/true;
 
+function isConfigurable(key, publicStatic) {
+  return publicStatic ? !/^[A-Z_]+$/.test(key) : true;
+}
+
 if (typeof console === 'undefined') {
   console = {};
 }
@@ -158,10 +162,11 @@ wru.test([
     test: function () {
       function check(obj, prop, value, publicStatic) {
         var tmp = gOPD(obj, prop);
+        var configurable = isConfigurable(prop, publicStatic);
         wru.assert('checking ' + prop,
-          !!tmp.enumerable === publicStatic &&
-          !!tmp.configurable === !publicStatic &&
-          !!tmp.writable === !publicStatic &&
+          !!tmp.enumerable === false &&
+          !!tmp.configurable === configurable &&
+          !!tmp.writable === configurable &&
           tmp.value === value
         );
       }
@@ -181,6 +186,41 @@ wru.test([
         check(B, 'A', 'a', true);
         check(B, 'B', 'b', true);
         check(B.prototype, 'b', 'b', false);
+      }
+    }
+  },{
+    name: 'supports getters',
+    test: function () {
+      var gOPD = Object.getOwnPropertyDescriptor;
+      if (testIE9AndHigher && gOPD) {
+        var A = Class(Object.defineProperty({}, 'test', {
+          enumerable: false,
+          get: function () {
+            return 123;
+          }
+        }));
+        var tmp = gOPD(A.prototype, 'test');
+        wru.assert('checking A#test',
+          !!tmp.enumerable === false &&
+          !!tmp.configurable === true &&
+          typeof tmp.get === 'function' &&
+          (new A).test === 123
+        );
+        var B = Class({
+          'static': Object.defineProperty({}, 'test', {
+            enumerable: false,
+            get: function () {
+              return 456;
+            }
+          })
+        });
+        var tmp = gOPD(B, 'test');
+        wru.assert('checking B.test',
+          !!tmp.enumerable === false &&
+          !!tmp.configurable === true &&
+          typeof tmp.get === 'function' &&
+          B.test === 456
+        );
       }
     }
   }, {
@@ -491,6 +531,19 @@ wru.test([
         B.prototype.constructor === B &&
         C.prototype.constructor === C
       );
+    }
+  }, {
+    name: 'super getter and super setter',
+    test: function () {
+      if (testIE9AndHigher) {
+        var rnd = Math.random();
+        var A = Function('Class,v', 'return Class({get prop() {return v},set prop(x) {v=x}})')(Class, rnd);
+        var B = Function('Class,A', 'return Class({extends:A,get prop() {return this.super()},set prop(x) {this.super(x)}})')(Class, A);
+        var o = new B;
+        wru.assert(o.prop === rnd);
+        o.prop = '---';
+        wru.assert(o.prop === '---');
+      }
     }
   }
   /*
