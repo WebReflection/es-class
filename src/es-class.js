@@ -137,6 +137,18 @@ var Class = Class || (function (Object) {
     }
   }
 
+  // return the right constructor analyzing the parent.
+  // if the parent is empty there is no need to call it.
+  function createConstructor(hasParentPrototype, parent) {
+    var Class = function Class() {};
+    return hasParentPrototype && ('' + parent) !== ('' + Class) ?
+      function Class() {
+        return parent.apply(this, arguments);
+      } :
+      Class
+    ;
+  }
+
   // common defineProperty wrapper
   function define(target, key, value, publicStatic) {
     var configurable = isConfigurable(key, publicStatic);
@@ -268,13 +280,8 @@ var Class = Class || (function (Object) {
       hasParentPrototype = hasParent && typeof parent === 'function',
       inherits = hasParentPrototype ? parent[PROTOTYPE] : parent,
       constructor = hasConstructor ?
-        description[CONSTRUCTOR] : (
-          hasParentPrototype ?
-            function Class() {
-              return parent.apply(this, arguments);
-            } :
-            function Class() {}
-        ),
+        description[CONSTRUCTOR] :
+        createConstructor(hasParentPrototype, parent),
       hasSuper = hasParent && hasConstructor && superRegExp.test(constructor),
       prototype = hasParent ? create(inherits) : constructor[PROTOTYPE],
       mixins,
