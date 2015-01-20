@@ -571,5 +571,29 @@ wru.test([
         wru.assert('a.method is writable', gOPD(A.prototype, 'method').writable);
       }
     }
+  },{
+    name: 'inherited constructors',
+    test: function () {
+      var A = Class({});
+      var B = Class({'extends': A});
+      wru.assert(
+        'no super or parent call involved',
+        A.prototype.constructor.toString() === B.prototype.constructor.toString()
+      );
+      var constructor = function () {
+        // pretending to do something
+      };
+      var C = Class({'extends': B, constructor: constructor});
+      
+      var D = Class({'extends': C});
+      wru.assert(
+        'expected constructor',
+        C.prototype.constructor === constructor
+      );
+      wru.assert(
+        'expected super / parent call',
+        A.prototype.constructor.toString() !== D.prototype.constructor.toString()
+      );
+    }
   }
 ]);
