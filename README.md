@@ -120,7 +120,7 @@ var B = Class({ extends: A,
 });
 ```
 
-A simple call to `6to5 --whitelist=arrowFunctions,propertyMethodAssignment f.js` and the output will be way cleaner than any automation produced by the same transpiler.
+A simple call to `6to5 --whitelist=es6.arrowFunctions,es6.properties.shorthand f.js` and the output will be way cleaner than any automation produced by the same transpiler.
 
 Your output will be more **readable** and also probably faster at execution time.
 
