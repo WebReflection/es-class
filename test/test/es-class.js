@@ -268,6 +268,40 @@ wru.test([
       wru.assert((new A).mixinInvoked === true);
     }
   }, {
+    name: 'with via class',
+    test: function () {
+      var A = Class({
+        'with': Class({
+          constructor: function () {
+            this.mixinInvoked = true;
+          },
+          mixedA: 'mixedA'
+        }),
+        a: 'a'
+      });
+      wru.assert((new A).a === 'a');
+      wru.assert((new A).mixedA === 'mixedA');
+      wru.assert((new A).mixinInvoked === true);
+    }
+  }, {
+    name: 'with via inherited class',
+    test: function () {
+      var A = Class({
+        'with': Class({
+          'extends': Class({
+            constructor: function () {
+              this.mixinInvoked = true;
+            }
+          }),
+          mixedA: 'mixedA'
+        }),
+        a: 'a'
+      });
+      wru.assert((new A).a === 'a');
+      wru.assert((new A).mixedA === 'mixedA');
+      wru.assert((new A).mixinInvoked === true);
+    }
+  }, {
     name: 'multiple with',
     test: function () {
       var sequence = [];

@@ -37,6 +37,10 @@ var Class = Class || (function (Object) {
     SUPER = 'super',
     WITH = 'with',
 
+    // infamous property used as fallback
+    // for IE8 and lower only
+    PROTO = '__proto__',
+
     // used to copy non enumerable properties on IE
     nonEnumerables = [
       'hasOwnProperty',
@@ -94,6 +98,14 @@ var Class = Class || (function (Object) {
         return names;
     },
 
+    // needed to verify the existence
+    getPrototypeOf = Object.getPrototypeOf,
+
+    // needed to allow Classes as traits
+    gPO = getPrototypeOf || function (o) {
+      return o[PROTO] || null;
+    },
+
     // used to avoid setting `arguments` and other function properties
     // when public static are copied over
     nativeFunctionOPN = new RegExp('^(?:' + gOPN(function () {}).join('|') + ')$'),
@@ -130,13 +142,21 @@ var Class = Class || (function (Object) {
       init = [],
       i = 0; i < mixins.length; i++
     ) {
-      source = mixins[i];
+      source = transformMixin(mixins[i]);
       if (hOP.call(source, INIT)) {
         init.push(source[INIT]);
       }
       copyOwn(source, target, inherits, false, false);
     }
     return init;
+  }
+
+  // used to copy properties from a class used as trait
+  function assignFromPrototype(key) {
+    /*jshint validthis: true */
+    if (isNotASpecialKey(key, false) && !hOP.call(this, key)) {
+      defineProperty(this, key, gOPD(this.init.prototype, key));
+    }
   }
 
   // configure source own properties in the target
@@ -202,6 +222,24 @@ var Class = Class || (function (Object) {
             key !== SUPER &&
             key !== WITH &&
             (allowInit || key !== INIT);
+  }
+
+  // will eventually convert classes or constructors
+  // into trait objects, before assigning them as such
+  function transformMixin(trait) {
+    if (typeof trait === 'object') return trait;
+    if (trait.length) {
+      warn((trait.name || 'Class') + ' should not expect arguments');
+    }
+    for (var
+      object = {init: trait},
+      proto = trait.prototype;
+      proto && proto !== Object.prototype;
+      proto = gPO(proto)
+    ) {
+      gOPN(proto).forEach(assignFromPrototype, object);
+    }
+    return object;
   }
 
   // set a property via defineProperty using a common descriptor
@@ -347,6 +385,9 @@ var Class = Class || (function (Object) {
     copyOwn(description, prototype, inherits, false, true);
     if (hOP.call(description, IMPLEMENTS)) {
       verifyImplementations([].concat(description[IMPLEMENTS]), prototype);
+    }
+    if (hasParent && !getPrototypeOf) {
+      define(prototype, PROTO, inherits, false);
     }
     return constructor;
   };
