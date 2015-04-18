@@ -1,5 +1,5 @@
 {
-  "version": "0.9.1",
+  "version": "1.0.0",
   "license": "MIT",
   "name": "es-class",
   "description": "A future proof, backward compatible, JavaScript class utility.",
@@ -8,6 +8,7 @@
     "ES3",
     "ES5",
     "ES6",
+    "ES2015",
     "ES7",
     "KISS",
     "Class",
@@ -15,7 +16,9 @@
     "prototypal",
     "prototype",
     "simple",
-    "lightweight"
+    "lightweight",
+    "mixin",
+    "trait"
   ],
   "author": {
     "name": "Andrea Giammarchi",

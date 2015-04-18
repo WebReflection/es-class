@@ -196,6 +196,7 @@ Similar to what the deprecated `with` keyword actually does, every instance of `
 
 The optional `init` method will be executed, if present, right before the `constructor` in oder to have an already set instance with everything needed and expected to operate.
 
+Since version `1.0.0`, in case a trait is a class or a function, `init` will be represented by the `constructor`, and properties will be borrowed from its `prototype`.
 
 ### static
 Every class can have one or more static definitions.
