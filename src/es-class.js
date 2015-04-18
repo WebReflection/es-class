@@ -99,19 +99,51 @@ var Class = Class || (function (Object) {
 
   ;
 
-  // verified broken IE8
+  // verified broken IE8 or older browsers
   try {
     defineProperty({}, '{}', {});
   } catch(o_O) {
-    defineProperty = function (object, name, descriptor) {
-      object[name] = descriptor.value;
-      return object;
-    };
-    // basic ad-hoc private fallback for old browsers
-    // use es5-shim if you want a properly patched polyfill
-    gOPD = function (object, key) {
+    if ('__defineGetter__' in {}) {
+      defineProperty = function (object, name, descriptor) {
+        if (hOP.call(descriptor, 'value')) {
+          object[name] = descriptor.value;
+        } else {
+          if (hOP.call(descriptor, 'get')) {
+            object.__defineGetter__(name, descriptor.get);
+          }
+          if (hOP.call(descriptor, 'set')) {
+            object.__defineSetter__(name, descriptor.set);
+          }
+        }
+        return object;
+      };
+      gOPD = function (object, key) {
+        var
+          get = object.__lookupGetter__(key),
+          set = object.__lookupSetter__(key),
+          descriptor = {}
+        ;
+        if (get || set) {
+          if (get) {
+            descriptor.get = get;
+          }
+          if (set) {
+            descriptor.set = set;
+          }
+        } else {
+          descriptor.value = object[key];
+        }
+        return descriptor;
+      };
+    } else {
+      defineProperty = function (object, name, descriptor) {
+        object[name] = descriptor.value;
+        return object;
+      };
+      gOPD = function (object, key) {
         return {value: object[key]};
-    };
+      };
+    }
   }
 
   // copy all imported enumerable methods and properties

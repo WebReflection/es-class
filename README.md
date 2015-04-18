@@ -20,11 +20,12 @@ Following a list of tested browsers split in Desktop and Mobile.
 
 #### Desktop
 
-  * Chrome
-  * Firefox
   * IE 6 or greater
+  * Firefox 3 and greater
+  * Chrome
   * Safari
   * Opera
+
 
 #### Mobile
 
@@ -35,6 +36,8 @@ Following a list of tested browsers split in Desktop and Mobile.
   * Kindle Fire
   * Xpress
   * Opera Mini and Mobile
+  * Blackberry
+  * Ubuntu Phone
 
 
 
@@ -90,7 +93,7 @@ me.emit('work:start', {
 
 
 ### ES6 Ready
-Using [6to5](http://6to5.org/) it is possible to make your code directly compatible down to ES5 or even ES3 without loosing the ability to debug in every platform without needing source-map. What you see is basically what you get.
+Using [Babel](https://babeljs.io) it is possible to make your code directly compatible down to ES5 or even ES3 without loosing the ability to debug in every platform without needing source-map. What you see is basically what you get.
 
 ```js
 // how you would write in native ES6
@@ -120,7 +123,7 @@ var B = Class({ extends: A,
 });
 ```
 
-A simple call to `6to5 --whitelist=es6.arrowFunctions,es6.properties.shorthand f.js` and the output will be way cleaner than any automation produced by the same transpiler.
+A simple call to `babel --whitelist=es6.arrowFunctions,es6.properties.shorthand f.js` and the output will be way cleaner than any automation produced by the same transpiler.
 
 Your output will be more **readable** and also probably faster at execution time.
 

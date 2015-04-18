@@ -3,6 +3,29 @@ var Class = require('../build/es-class.npm.js');
 //:remove
 
 var testIE9AndHigher = /*@cc_on 5.8<@_jscript_version&&@*/true;
+if (testIE9AndHigher) {
+  try { Function('Class,v', 'return Class({get prop() {return v},set prop(x) {v=x}})'); }
+  catch(o_O) { testIE9AndHigher = false; }
+}
+
+function gOPDFallback(object, key) {
+  var
+    get = object.__lookupGetter__(key),
+    set = object.__lookupSetter__(key),
+    descriptor = {}
+  ;
+  if (get || set) {
+    if (get) {
+      descriptor.get = get;
+    }
+    if (set) {
+      descriptor.set = set;
+    }
+  } else {
+    descriptor.value = object[key];
+  }
+  return descriptor;
+}
 
 function isConfigurable(key, publicStatic) {
   return publicStatic ? !/^[A-Z_]+$/.test(key) : true;
@@ -188,7 +211,7 @@ wru.test([
         check(B.prototype, 'b', 'b', false);
       }
     }
-  },{
+  }, {
     name: 'supports getters',
     test: function () {
       var gOPD = Object.getOwnPropertyDescriptor;
@@ -220,6 +243,27 @@ wru.test([
           !!tmp.configurable === true &&
           typeof tmp.get === 'function' &&
           B.test === 456
+        );
+      }
+    }
+  }, {
+    name: 'supports old style getters',
+    test: function () {
+      var gOPD = Object.getOwnPropertyDescriptor || gOPDFallback;
+      if (testIE9AndHigher) {
+        var rnd = Math.random();
+        var A = Function('Class,v', 'return Class({get prop() {return v},set prop(x) {v=x}})')(Class, rnd);
+        var tmp = gOPD(A.prototype, 'prop');
+        wru.assert('checking A#prop',
+          typeof tmp.get === 'function' &&
+          (new A).prop === rnd
+        );
+        var B = Class({
+          'extends': A
+        });
+        var tmp = gOPD(A.prototype, 'prop');
+        wru.assert('checking B#test',
+          (new B).prop === rnd
         );
       }
     }
@@ -579,7 +623,7 @@ wru.test([
         wru.assert(o.prop === '---');
       }
     }
-  },{
+  }, {
     name: 'constants VS methods',
     test: function() {
       var gOPD = Object.getOwnPropertyDescriptor;
@@ -594,7 +638,7 @@ wru.test([
       });
       wru.assert('VALUE has been set', A.VALUE === Math.PI);
       wru.assert('method has been set', A.method === method);
-      if (testIE9AndHigher) {
+      if (testIE9AndHigher && gOPD) {
         wru.assert('VALUE is non configurable', !gOPD(A, 'VALUE').configurable);
         wru.assert('VALUE is non writable', !gOPD(A, 'VALUE').writable);
         wru.assert('method is configurable', gOPD(A, 'method').configurable);
@@ -618,7 +662,6 @@ wru.test([
         // pretending to do something
       };
       var C = Class({'extends': B, constructor: constructor});
-      
       var D = Class({'extends': C});
       wru.assert(
         'expected constructor',
