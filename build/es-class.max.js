@@ -71,11 +71,8 @@ var Class = Class || (function (Object) {
     // redefined if not present
     defineProperty = Object.defineProperty,
 
-    // basic ad-hoc private fallback for old browsers
-    // use es5-shim if you want a properly patched polyfill
-    gOPD = Object.getOwnPropertyDescriptor || function (object, key) {
-        return {value: object[key]};
-    },
+    // redefined if not present
+    gOPD = Object.getOwnPropertyDescriptor,
 
     // basic ad-hoc private fallback for old browsers
     // use es5-shim if you want a properly patched polyfill
@@ -132,6 +129,11 @@ var Class = Class || (function (Object) {
       object[name] = descriptor.value;
       return object;
     };
+    // basic ad-hoc private fallback for old browsers
+    // use es5-shim if you want a properly patched polyfill
+    gOPD = function (object, key) {
+        return {value: object[key]};
+    };
   }
 
   // copy all imported enumerable methods and properties
@@ -148,14 +150,6 @@ var Class = Class || (function (Object) {
       copyOwn(source, target, inherits, false, false);
     }
     return init;
-  }
-
-  // used to copy properties from a class used as trait
-  function assignFromPrototype(key) {
-    /*jshint validthis: true */
-    if (isNotASpecialKey(key, false) && !hOP.call(this, key)) {
-      defineProperty(this, key, gOPD(this.init.prototype, key));
-    }
   }
 
   // configure source own properties in the target
@@ -231,12 +225,18 @@ var Class = Class || (function (Object) {
       warn((trait.name || 'Class') + ' should not expect arguments');
     }
     for (var
+      i, key, keys,
       object = {init: trait},
       proto = trait.prototype;
       proto && proto !== Object.prototype;
       proto = gPO(proto)
     ) {
-      gOPN(proto).forEach(assignFromPrototype, object);
+      for (i = 0, keys = gOPN(proto); i < keys.length; i++) {
+        key = keys[i];
+        if (isNotASpecialKey(key, false) && !hOP.call(object, key)) {
+          defineProperty(object, key, gOPD(proto, key));
+        }
+      }
     }
     return object;
   }
