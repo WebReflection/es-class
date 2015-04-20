@@ -1,5 +1,5 @@
 /*!
-Copyright (C) 2014 by Andrea Giammarchi - @WebReflection
+Copyright (C) 2015 by Andrea Giammarchi - @WebReflection
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -50,9 +50,16 @@ var Class = Class || (function (Object) {
       'valueOf'
     ],
 
-    // IE < 9 bug only
-    hasIEEnumerableBug = !{valueOf:0}[nonEnumerables[2]](nonEnumerables[5]),
+    // Espruino 1.7x does not have (yet) Object.prototype.propertyIsEnumerable
+    propertyIsEnumerable = {}[nonEnumerables[2]] || function (p) {
+      for (var k in this) if (p === k) return this.hasOwnProperty(p);
+      return false;
+    },
 
+    // IE < 9 bug only
+    hasIEEnumerableBug = !propertyIsEnumerable.call({valueOf:0}, nonEnumerables[5]),
+
+    // shortcut for own properties
     hOP = Object[nonEnumerables[0]],
 
     // basic ad-hoc private fallback for old browsers
@@ -104,21 +111,37 @@ var Class = Class || (function (Object) {
 
     // used to avoid setting `arguments` and other function properties
     // when public static are copied over
-    nativeFunctionOPN = new RegExp('^(?:' + gOPN(function () {}).join('|') + ')$'),
+    nativeFunctionOPN = gOPN(function () {}),
+    indexOf = nativeFunctionOPN.indexOf || function (v) {
+      for (var i = this.length; i-- && this[i] !== v;) {}
+      return i;
+    },
 
-    superRegExp = /\bsuper\b/.test(function () {
-      // this test should never be minifier sensistive
+    trustSuper = ('' + function () {
+      // this test should never be minifier sensitive
+      // or the indexOf check after will fail
       this['super']();
-    }) ? /\bsuper\b/ : /.*/
-    // In 2010 Opera 10.5 for Linux Debian 6
-    // goes nut with methods to string representation,
-    // truncating pieces of text in an unpredictable way.
-    // If you are targeting such browser
-    // be aware that super invocation might fail.
-    // This is the only exception I could find
-    // from year 2000 to modern days browsers
-    // plus everything else would work just fine.
-
+    }).indexOf(SUPER) < 0 ?
+      // In 2010 Opera 10.5 for Linux Debian 6
+      // goes nut with methods to string representation,
+      // truncating pieces of text in an unpredictable way.
+      // If you are targeting such browser
+      // be aware that super invocation might fail.
+      // This is the only exception I could find
+      // from year 2000 to modern days browsers
+      // plus everything else would work just fine.
+      function () { return true; } :
+      // all other JS engines should be just fine
+      function (method) {
+        var
+          str = '' + method,
+          i = str.indexOf(SUPER)
+        ;
+        return i < 0 ?
+          false :
+          isBoundary(str.charCodeAt(i - 1)) &&
+          isBoundary(str.charCodeAt(i + 5));
+      }
   ;
 
   // verified broken IE8 or older browsers
@@ -194,7 +217,7 @@ var Class = Class || (function (Object) {
     ) {
       key = names[i];
       if (
-        (noFunctionCheck || !nativeFunctionOPN.test(key)) &&
+        (noFunctionCheck || indexOf.call(nativeFunctionOPN, key) < 0) &&
         isNotASpecialKey(key, allowInit)
       ) {
         if (hOP.call(target, key)) {
@@ -228,10 +251,20 @@ var Class = Class || (function (Object) {
     });
   }
 
-  // is key is UPPER_CASE and the property is public static
+  // verifies a specific char code is not in [A-Za-z_]
+  // used to avoid RegExp for non RegExp aware environment
+  function isBoundary(code) {
+    return code ?
+      (code < 65 || 90 < code) &&
+      (code < 97 || 122 < code) &&
+      code !== 95 :
+      true;
+  }
+
+  // if key is UPPER_CASE and the property is public static
   // it will define the property as non configurable and non writable
   function isConfigurable(key, publicStatic) {
-    return publicStatic ? !/^[A-Z_]+$/.test(key) : true;
+    return publicStatic ? !isPublicStatic(key) : true;
   }
 
   // verifies a key is not special for the class
@@ -247,6 +280,19 @@ var Class = Class || (function (Object) {
             key !== SUPER &&
             key !== WITH &&
             (allowInit || key !== INIT);
+  }
+
+  // verifies the entire string is upper case
+  // and contains eventually an underscore
+  // used to avoid RegExp for non RegExp aware environment
+  function isPublicStatic(key) {
+    for(var c, i = 0; i < key.length; i++) {
+      c = key.charCodeAt(i);
+      if ((c < 65 || 90 < c) && c !== 95) {
+        return false;
+      }
+    }
+    return true;
   }
 
   // will eventually convert classes or constructors
@@ -288,7 +334,7 @@ var Class = Class || (function (Object) {
       }
     } else if (hasValue) {
       value = descriptor.value;
-      if (typeof value === 'function' && superRegExp.test(value)) {
+      if (typeof value === 'function' && trustSuper(value)) {
         descriptor.value = wrap(inherits, key, value, publicStatic);
       }
     } else {
@@ -353,7 +399,7 @@ var Class = Class || (function (Object) {
 
   // get/set shortcut for the eventual wrapper
   function wrapGetOrSet(inherits, key, descriptor, gs, publicStatic) {
-    if (hOP.call(descriptor, gs) && superRegExp.test(descriptor[gs])) {
+    if (hOP.call(descriptor, gs) && trustSuper(descriptor[gs])) {
       descriptor[gs] = wrap(
         gOPD(inherits, key),
         gs,
@@ -374,7 +420,7 @@ var Class = Class || (function (Object) {
       constructor = hasConstructor ?
         description[CONSTRUCTOR] :
         createConstructor(hasParentPrototype, parent),
-      hasSuper = hasParent && hasConstructor && superRegExp.test(constructor),
+      hasSuper = hasParent && hasConstructor && trustSuper(constructor),
       prototype = hasParent ? create(inherits) : constructor[PROTOTYPE],
       mixins,
       length
