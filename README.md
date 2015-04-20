@@ -16,7 +16,7 @@ Feel free to [test all features](http://webreflection.github.io/es-class/test/) 
 
 ### Compatibility
 
-Following a list of tested browsers split in Desktop and Mobile.
+Following a list of tested browsers split in Desktop and Mobile, plus a list of server/micro-controller side supported engines.
 
 #### Desktop
 
@@ -39,6 +39,16 @@ Following a list of tested browsers split in Desktop and Mobile.
   * Blackberry
   * Ubuntu Phone
 
+
+#### Others (tested)
+
+  * [Espruino Pico](http://www.espruino.com)
+  * MIPS version of node for [Arduino Yun](http://www.arduino.cc/en/Main/ArduinoBoardYun?from=Products.ArduinoYUN)
+  * node.js 0.6+ and io.js every (so Raspberry PI and every other with node.js)
+  * Duktape and Nashorn
+
+
+If you actually know a hybrid (like Espruino) or ES3+ engine that does not work, please file a bug, thank you!
 
 
 ### Features
