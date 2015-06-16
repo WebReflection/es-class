@@ -13,6 +13,19 @@ es-class
 Feel free to [test all features](http://webreflection.github.io/es-class/test/) related to this project, and please come back if your browser is not green.
 
 
+#### via npm
+`npm install es-class`
+It is suggested to install this globally as it's a very small script.
+
+
+#### via cdn
+Many thanks to cdnjs for hosting this script. Following an example on how to include it.
+```html
+<script
+  src="//cdnjs.cloudflare.com/ajax/libs/es-class/1.2.2/es-class.js"
+>/* ES-Class */</script>
+```
+
 
 ### Compatibility
 
@@ -21,7 +34,7 @@ Following a list of tested browsers split in Desktop and Mobile, plus a list of 
 #### Desktop
 
   * IE 6 or greater
-  * Firefox 3 and greater
+  * Firefox 3 or greater
   * Chrome
   * Safari
   * Opera
@@ -31,13 +44,15 @@ Following a list of tested browsers split in Desktop and Mobile, plus a list of 
 
   * Android 2 or greater
   * iOS 5 or greater
+  * UC Browser and UC Mini
   * IE9 Mobile or greater
-  * Bada
-  * Kindle Fire
-  * Xpress
   * Opera Mini and Mobile
-  * Blackberry
+  * Blackberry OS 7 and OS 10
+  * Kindle Fire
   * Ubuntu Phone
+  * Bada
+  * Xpress
+  * webOS
 
 
 #### Others (tested)

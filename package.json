@@ -1,5 +1,5 @@
 {
-  "version": "1.2.2",
+  "version": "1.2.3",
   "license": "MIT",
   "name": "es-class",
   "description": "A future proof, backward compatible, JavaScript class utility.",

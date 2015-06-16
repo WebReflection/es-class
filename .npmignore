@@ -1,9 +1,10 @@
-src/*
-test/*
-template/*
-node_modules/*
 build/es-class.max.amd.js
 build/es-class.amd.js
 build/es-class.max.js
+src
+test
+template
+node_modules
 Makefile
 index.html
+.travis.yml
