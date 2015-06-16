@@ -2,5 +2,8 @@ src/*
 test/*
 template/*
 node_modules/*
+build/es-class.max.amd.js
+build/es-class.amd.js
+build/es-class.max.js
 Makefile
 index.html
