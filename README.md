@@ -74,7 +74,7 @@ Following a summary:
   * [constructor](https://github.com/WebReflection/es-class/blob/master/FEATURES.md#constructor) to optionally define the implicit initializer per each instance
   * [extends](https://github.com/WebReflection/es-class/blob/master/FEATURES.md#extends) to optionally define a class or an object to inherit from
   * [super](https://github.com/WebReflection/es-class/blob/master/FEATURES.md#super) to shortcut super methods invocation
-  * [with](https://github.com/WebReflection/es-class/blob/master/FEATURES.md#with) to attach lightweight traits / mixins enabling composition behind optional initializers per each mixin
+  * [with](https://github.com/WebReflection/es-class/blob/master/FEATURES.md#with) to attach lightweight traits / mixins enabling composition behind optional initializers per each mixin. Compatible with [universal-mixin](https://github.com/WebReflection/universal-mixin/) since version  `1.3.0`
   * [static](https://github.com/WebReflection/es-class/blob/master/FEATURES.md#static) to define public static class constants, inherited if extended, without ever polluting the prototype
   * [implements](https://github.com/WebReflection/es-class/blob/master/FEATURES.md#implements) to perform light checks over expected implementations and warn eventually when something is missing
 

@@ -102,12 +102,23 @@ var Class = Class || (function (Object) {
         return names;
     },
 
+    // basic ad-hoc private fallback for old browsers
+    // returns empty Array if nonexistent
+    gOPS = Object.getOwnPropertySymbols || function () {
+      return [];
+    },
+
     // needed to verify the existence
     getPrototypeOf = Object.getPrototypeOf,
 
     // needed to allow Classes as traits
     gPO = getPrototypeOf || function (o) {
       return o[PROTO] || null;
+    },
+
+    // used to filter mixin  Symbol
+    isArray = Array.isArray || function (a) {
+      return Object[PROTOTYPE].toString.call(a) === '[object Array]';
     },
 
     // used to avoid setting `arguments` and other function properties
@@ -117,6 +128,9 @@ var Class = Class || (function (Object) {
       for (var i = this.length; i-- && this[i] !== v;) {}
       return i;
     },
+
+    // used to flag classes
+    isClassDescriptor = {value: true},
 
     trustSuper = ('' + function () {
       // this test should never be minifier sensitive
@@ -213,7 +227,7 @@ var Class = Class || (function (Object) {
     for (var
       key,
       noFunctionCheck = typeof source !== 'function',
-      names = gOPN(source),
+      names = gOPN(source).concat(gOPS(source)),
       i = 0; i < names.length; i++
     ) {
       key = names[i];
@@ -222,7 +236,7 @@ var Class = Class || (function (Object) {
         isNotASpecialKey(key, allowInit)
       ) {
         if (hOP.call(target, key)) {
-          warn('duplicated: ' + key);
+          warn('duplicated: ' + key.toString());
         }
         setProperty(inherits, target, key, gOPD(source, key), publicStatic);
       }
@@ -300,24 +314,48 @@ var Class = Class || (function (Object) {
   // into trait objects, before assigning them as such
   function transformMixin(trait) {
     if (typeof trait === 'object') return trait;
-    if (trait.length) {
-      warn((trait.name || 'Class') + ' should not expect arguments');
-    }
-    for (var
-      i, key, keys,
-      object = {init: trait},
-      proto = trait.prototype;
-      proto && proto !== Object.prototype;
-      proto = gPO(proto)
-    ) {
-      for (i = 0, keys = gOPN(proto); i < keys.length; i++) {
-        key = keys[i];
-        if (isNotASpecialKey(key, false) && !hOP.call(object, key)) {
-          defineProperty(object, key, gOPD(proto, key));
+    else {
+      var i, key, keys, object, proto;
+      if (trait.isClass) {
+        if (trait.length) {
+          warn((trait.name || 'Class') + ' should not expect arguments');
+        }
+        for (
+          object = {init: trait},
+          proto = trait.prototype;
+          proto && proto !== Object.prototype;
+          proto = gPO(proto)
+        ) {
+          for (i = 0, keys = gOPN(proto).concat(gOPS(proto)); i < keys.length; i++) {
+            key = keys[i];
+            if (isNotASpecialKey(key, false) && !hOP.call(object, key)) {
+              defineProperty(object, key, gOPD(proto, key));
+            }
+          }
+        }
+      } else {
+        for (
+          i = 0,
+          object = {},
+          proto = trait({}),
+          keys = gOPN(proto).concat(gOPS(proto));
+          i < keys.length; i++
+        ) {
+          key = keys[i];
+          if (key !== INIT) {
+            // if this key is the mixin one
+            if (~key.toString().indexOf('mixin:init') && isArray(proto[key])) {
+              // set the init simply as own method
+              object.init = proto[key][0];
+            } else {
+              // simply assign the descriptor
+              defineProperty(object, key, gOPD(proto, key));
+            }
+          }
         }
       }
+      return object;
     }
-    return object;
   }
 
   // set a property via defineProperty using a common descriptor
@@ -362,7 +400,7 @@ var Class = Class || (function (Object) {
       current = interfaces[i];
       for (key in current) {
         if (hOP.call(current, key) && !hOP.call(target, key)) {
-          warn(key + ' is not implemented');
+          warn(key.toString() + ' is not implemented');
         }
       }
     }
@@ -467,7 +505,7 @@ var Class = Class || (function (Object) {
     if (hasParent && !getPrototypeOf) {
       define(prototype, PROTO, inherits, false);
     }
-    return constructor;
+    return defineProperty(constructor, 'isClass', isClassDescriptor);
   };
 
 }(Object));
