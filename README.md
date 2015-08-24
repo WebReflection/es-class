@@ -1,7 +1,5 @@
-es-class
-========
-
-[![build status](https://secure.travis-ci.org/WebReflection/es-class.svg)](http://travis-ci.org/WebReflection/es-class)
+es-class [![build status](https://secure.travis-ci.org/WebReflection/es-class.svg)](http://travis-ci.org/WebReflection/es-class)
+=================================
 
 
 ### A future proof, backward compatible, JavaScript class utility.
