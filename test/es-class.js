@@ -711,5 +711,49 @@ wru.test([
       wru.assert('methodA works', a.methodA() === 'a');
       wru.assert('methodB works too', a.methodB() === 'b');
     }
+  }, {
+    name: 'static merged copy',
+    test: function  () {
+      var Panel = Class({
+        'static': {
+          override: {
+            stillWorks: -1
+          },
+          propTypes: {
+            SCROLLABLE: 1
+          },
+          defaultProps: {
+            SCROLLABLE: 2
+          }
+         }
+      });
+      var Page = Class({
+        'extends': Panel,
+        'static': {
+          override: {
+            stillWorks: 0,
+            evenBetter: 1
+          },
+          propTypes: {
+            RESIZABLE: 3
+          },
+          defaultProps: {
+            RESIZABLE: 4
+          }
+         }
+      });
+      wru.assert('different objects', Panel.propTypes !== Page.propTypes);
+      wru.assert('Page.propTypes.RESIZABLE', Page.propTypes.RESIZABLE === 3);
+      wru.assert('Page.propTypes.SCROLLABLE', Page.propTypes.SCROLLABLE === 1);
+      wru.assert('Page.defaultProps.RESIZABLE', Page.defaultProps.RESIZABLE === 4);
+      wru.assert('Page.defaultProps.SCROLLABLE', Page.defaultProps.SCROLLABLE === 2);
+      wru.assert('Panel.propTypes.RESIZABLE', !Panel.propTypes.RESIZABLE);
+      wru.assert('Panel.propTypes.SCROLLABLE', Panel.propTypes.SCROLLABLE === 1);
+      wru.assert('Panel.defaultProps.RESIZABLE', !Panel.defaultProps.RESIZABLE);
+      wru.assert('Panel.defaultProps.SCROLLABLE', Panel.defaultProps.SCROLLABLE === 2);
+      wru.assert('Panel.override.stillWorks', Panel.override.stillWorks === -1);
+      wru.assert('Page.override.stillWorks', Page.override.stillWorks === 0);
+      wru.assert('Page.override.evenBetter', Page.override.evenBetter === 1);
+    }
   }
 ]);
