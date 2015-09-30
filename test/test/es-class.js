@@ -2,6 +2,9 @@
 var Class = require('../build/es-class.npm.js');
 //:remove
 
+/*! (C) Andrea Giammarchi Mit Style License */
+var mixin=function(e){"use strict";var t=typeof t,n=typeof Symbol!==t,r=n&&!!Symbol.hasInstance,i=0,s=n?Symbol:function(e){return"@@:"+ ++i+":"+e+Math.random()},o=s("mixin:init"),u=e.hasOwnProperty,a=e.defineProperty||function(e,t,n){e[t]=n.value},f=e.getOwnPropertyNames||e.keys||function(e,t,n){t=[];for(n in e)u.call(e,n)&&t.push(n);return t},l=e.getOwnPropertyDescriptor||function(e,t){return{value:e[t]}},c=e.getOwnPropertySymbols||function(){return[]},h=typeof Reflect===t||!Reflect.ownKeys?function(e){return f(e).concat(c(e))}:Reflect.ownKeys,p=function(e,t){for(var n,r,i=h(t),s=0,o=i.length;s<o;s++)r=l(t,n=i[s]),r.configurable=!1,u.call(r,"writable")&&(r.writable=!1),a(e,n,r)},d=r&&{value:!0},v={value:function(){for(var t,n=this[o],r=0,i=n.length;r<i;r++)if(n[r].apply(this,arguments)!==t)throw new Error("mixin.init() must not return a value")}};return function(t,n){function c(e){for(var n,s,c=e.prototype||e,h=0,p=i.length;h<p;h++)n=i[h],n==="init"?(u.call(c,o)||(a(c,o,{value:[]}),a(c,n,v)),c[o].push(t[n])):(s=l(t,n),s.enumerable=!1,a(c,n,s));return r&&a(c,f,d),e}var i=h(t),f=r&&s("isa");return n&&p(c,n),r&&a(c,Symbol.hasInstance,{value:function(t){return!!t[f]}}),c}}(Object);
+
 var testIE9AndHigher = /*@cc_on 5.8<@_jscript_version&&@*/true;
 if (testIE9AndHigher) {
   try { Function('Class,v', 'return Class({get prop() {return v},set prop(x) {v=x}})'); }
@@ -671,6 +674,86 @@ wru.test([
         'expected super / parent call',
         A.prototype.constructor.toString() !== D.prototype.constructor.toString()
       );
+    }
+  }, {
+    name: 'Universal Mixin Integration',
+    test: function () {
+      var executed = 0;
+      var ea = 0;
+      var eb = 0;
+      var UtilityA = mixin({
+        init: function ()  {
+          executed++;
+          ea++;
+        },
+        methodA:  function () {
+          return 'a';
+        }
+      });
+      var UtilityB = mixin({
+        init: function ()  {
+          executed++;
+          eb++;
+        },
+        methodB:  function () {
+          return 'b';
+        }
+      });
+      var A = Class({
+        'with': [
+          UtilityA,
+          UtilityB
+        ]
+      });
+      var a = new A;
+      wru.assert('implicitly executed twice', executed === 2);
+      wru.assert('both initializers', ea === 1 && eb === 1);
+      wru.assert('methodA works', a.methodA() === 'a');
+      wru.assert('methodB works too', a.methodB() === 'b');
+    }
+  }, {
+    name: 'static merged copy',
+    test: function  () {
+      var Panel = Class({
+        'static': {
+          override: {
+            stillWorks: -1
+          },
+          propTypes: {
+            SCROLLABLE: 1
+          },
+          defaultProps: {
+            SCROLLABLE: 2
+          }
+         }
+      });
+      var Page = Class({
+        'extends': Panel,
+        'static': {
+          override: {
+            stillWorks: 0,
+            evenBetter: 1
+          },
+          propTypes: {
+            RESIZABLE: 3
+          },
+          defaultProps: {
+            RESIZABLE: 4
+          }
+         }
+      });
+      wru.assert('different objects', Panel.propTypes !== Page.propTypes);
+      wru.assert('Page.propTypes.RESIZABLE', Page.propTypes.RESIZABLE === 3);
+      wru.assert('Page.propTypes.SCROLLABLE', Page.propTypes.SCROLLABLE === 1);
+      wru.assert('Page.defaultProps.RESIZABLE', Page.defaultProps.RESIZABLE === 4);
+      wru.assert('Page.defaultProps.SCROLLABLE', Page.defaultProps.SCROLLABLE === 2);
+      wru.assert('Panel.propTypes.RESIZABLE', !Panel.propTypes.RESIZABLE);
+      wru.assert('Panel.propTypes.SCROLLABLE', Panel.propTypes.SCROLLABLE === 1);
+      wru.assert('Panel.defaultProps.RESIZABLE', !Panel.defaultProps.RESIZABLE);
+      wru.assert('Panel.defaultProps.SCROLLABLE', Panel.defaultProps.SCROLLABLE === 2);
+      wru.assert('Panel.override.stillWorks', Panel.override.stillWorks === -1);
+      wru.assert('Page.override.stillWorks', Page.override.stillWorks === 0);
+      wru.assert('Page.override.evenBetter', Page.override.evenBetter === 1);
     }
   }
 ]);

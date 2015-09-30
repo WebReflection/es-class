@@ -34,6 +34,7 @@ var Class = Class || (function (Object) {
     PROTOTYPE = 'prototype',
     STATIC = 'static',
     SUPER = 'super',
+    VALUE = 'value',
     WITH = 'with',
 
     // infamous property used as fallback
@@ -101,6 +102,12 @@ var Class = Class || (function (Object) {
         return names;
     },
 
+    // basic ad-hoc private fallback for old browsers
+    // returns empty Array if nonexistent
+    gOPS = Object.getOwnPropertySymbols || function () {
+      return [];
+    },
+
     // needed to verify the existence
     getPrototypeOf = Object.getPrototypeOf,
 
@@ -109,13 +116,26 @@ var Class = Class || (function (Object) {
       return o[PROTO] || null;
     },
 
+    // equivalent of Reflect.ownKeys
+    oK = function (o) {
+      return gOPN(o).concat(gOPS(o));
+    },
+
+    // used to filter mixin  Symbol
+    isArray = Array.isArray || function (a) {
+      return Object[PROTOTYPE].toString.call(a) === '[object Array]';
+    },
+
     // used to avoid setting `arguments` and other function properties
     // when public static are copied over
-    nativeFunctionOPN = gOPN(function () {}),
+    nativeFunctionOPN = gOPN(function () {}).concat('arguments'),
     indexOf = nativeFunctionOPN.indexOf || function (v) {
       for (var i = this.length; i-- && this[i] !== v;) {}
       return i;
     },
+
+    // used to flag classes
+    isClassDescriptor = {value: true},
 
     trustSuper = ('' + function () {
       // this test should never be minifier sensitive
@@ -150,8 +170,8 @@ var Class = Class || (function (Object) {
   } catch(o_O) {
     if ('__defineGetter__' in {}) {
       defineProperty = function (object, name, descriptor) {
-        if (hOP.call(descriptor, 'value')) {
-          object[name] = descriptor.value;
+        if (hOP.call(descriptor, VALUE)) {
+          object[name] = descriptor[VALUE];
         } else {
           if (hOP.call(descriptor, 'get')) {
             object.__defineGetter__(name, descriptor.get);
@@ -176,13 +196,13 @@ var Class = Class || (function (Object) {
             descriptor.set = set;
           }
         } else {
-          descriptor.value = object[key];
+          descriptor[VALUE] = object[key];
         }
         return descriptor;
       };
     } else {
       defineProperty = function (object, name, descriptor) {
-        object[name] = descriptor.value;
+        object[name] = descriptor[VALUE];
         return object;
       };
       gOPD = function (object, key) {
@@ -207,12 +227,72 @@ var Class = Class || (function (Object) {
     return init;
   }
 
+  // deep copy all properties of an object (static objects only)
+  function copyDeep(source) {
+    for (var
+      key, descriptor, value,
+      target = create(gPO(source)),
+      names = oK(source),
+      i = 0; i < names.length; i++
+    ) {
+      key = names[i];
+      descriptor = gOPD(source, key);
+      if (hOP.call(descriptor, VALUE)) {
+        copyValueIfObject(descriptor, copyDeep);
+      }
+      defineProperty(target, key, descriptor);
+    }
+    return target;
+  }
+
+  // given two objects, performs a deep copy
+  // per each property not present in the target
+  // otherwise merges, without overwriting,
+  // all properties within the object
+  function copyMerged(source, target) {
+    for (var
+      key, descriptor, value, tvalue,
+      names = oK(source),
+      i = 0; i < names.length; i++
+    ) {
+      key = names[i];
+      descriptor = gOPD(source, key);
+      // target already has this property
+      if (hOP.call(target, key)) {
+        // verify the descriptor can  be merged
+        if (hOP.call(descriptor, VALUE)) {
+          value = descriptor[VALUE];
+          // which means, verify it's an object
+          if (isObject(value)) {
+            // in such case, verify the target can be modified
+            descriptor = gOPD(target, key);
+            // meaning verify it's a data descriptor
+            if (hOP.call(descriptor, VALUE)) {
+              tvalue = descriptor[VALUE];
+              // and it's actually an object
+              if (isObject(tvalue)) {
+                copyMerged(value, tvalue);
+              }
+            }
+          }
+        }
+      } else {
+        // target has no property at all
+        if (hOP.call(descriptor, VALUE)) {
+          // copy deep if it's an object
+          copyValueIfObject(descriptor, copyDeep);
+        }
+        defineProperty(target, key, descriptor);
+      }
+    }
+  }
+
   // configure source own properties in the target
   function copyOwn(source, target, inherits, publicStatic, allowInit) {
     for (var
       key,
       noFunctionCheck = typeof source !== 'function',
-      names = gOPN(source),
+      names = oK(source),
       i = 0; i < names.length; i++
     ) {
       key = names[i];
@@ -221,12 +301,21 @@ var Class = Class || (function (Object) {
         isNotASpecialKey(key, allowInit)
       ) {
         if (hOP.call(target, key)) {
-          warn('duplicated: ' + key);
+          warn('duplicated: ' + key.toString());
         }
         setProperty(inherits, target, key, gOPD(source, key), publicStatic);
       }
     }
   }
+
+  // shortcut to copy objects into descriptor.value
+  function copyValueIfObject(where, how) {
+    var what = where[VALUE];
+    if (isObject(what)) {
+      where[VALUE] = how(what);
+    }
+  }
+
 
   // return the right constructor analyzing the parent.
   // if the parent is empty there is no need to call it.
@@ -282,6 +371,12 @@ var Class = Class || (function (Object) {
             (allowInit || key !== INIT);
   }
 
+  // verifies a generic value is actually an object
+  function isObject(value) {
+    /*jshint eqnull: true */
+    return value != null && typeof value === 'object';
+  }
+
   // verifies the entire string is upper case
   // and contains eventually an underscore
   // used to avoid RegExp for non RegExp aware environment
@@ -298,25 +393,49 @@ var Class = Class || (function (Object) {
   // will eventually convert classes or constructors
   // into trait objects, before assigning them as such
   function transformMixin(trait) {
-    if (typeof trait === 'object') return trait;
-    if (trait.length) {
-      warn((trait.name || 'Class') + ' should not expect arguments');
-    }
-    for (var
-      i, key, keys,
-      object = {init: trait},
-      proto = trait.prototype;
-      proto && proto !== Object.prototype;
-      proto = gPO(proto)
-    ) {
-      for (i = 0, keys = gOPN(proto); i < keys.length; i++) {
-        key = keys[i];
-        if (isNotASpecialKey(key, false) && !hOP.call(object, key)) {
-          defineProperty(object, key, gOPD(proto, key));
+    if (isObject(trait)) return trait;
+    else {
+      var i, key, keys, object, proto;
+      if (trait.isClass) {
+        if (trait.length) {
+          warn((trait.name || 'Class') + ' should not expect arguments');
+        }
+        for (
+          object = {init: trait},
+          proto = trait.prototype;
+          proto && proto !== Object.prototype;
+          proto = gPO(proto)
+        ) {
+          for (i = 0, keys = oK(proto); i < keys.length; i++) {
+            key = keys[i];
+            if (isNotASpecialKey(key, false) && !hOP.call(object, key)) {
+              defineProperty(object, key, gOPD(proto, key));
+            }
+          }
+        }
+      } else {
+        for (
+          i = 0,
+          object = {},
+          proto = trait({}),
+          keys = oK(proto);
+          i < keys.length; i++
+        ) {
+          key = keys[i];
+          if (key !== INIT) {
+            // if this key is the mixin one
+            if (~key.toString().indexOf('mixin:init') && isArray(proto[key])) {
+              // set the init simply as own method
+              object.init = proto[key][0];
+            } else {
+              // simply assign the descriptor
+              defineProperty(object, key, gOPD(proto, key));
+            }
+          }
         }
       }
+      return object;
     }
-    return object;
   }
 
   // set a property via defineProperty using a common descriptor
@@ -324,18 +443,29 @@ var Class = Class || (function (Object) {
   // If publicStatic is true, properties are both non configurable and non writable
   function setProperty(inherits, target, key, descriptor, publicStatic) {
     var
-      hasValue = hOP.call(descriptor, 'value'),
+      hasValue = hOP.call(descriptor, VALUE),
       configurable,
       value
     ;
     if (publicStatic) {
       if (hOP.call(target, key)) {
+        // in case the value is not a static one
+        if (
+          inherits &&
+          isObject(target[key]) &&
+          isObject(inherits[CONSTRUCTOR][key])
+        ) {
+          copyMerged(inherits[CONSTRUCTOR][key], target[key]);
+        }
         return;
+      } else if (hasValue) {
+        // in case it's an object perform a deep copy
+        copyValueIfObject(descriptor, copyDeep);
       }
     } else if (hasValue) {
-      value = descriptor.value;
+      value = descriptor[VALUE];
       if (typeof value === 'function' && trustSuper(value)) {
-        descriptor.value = wrap(inherits, key, value, publicStatic);
+        descriptor[VALUE] = wrap(inherits, key, value, publicStatic);
       }
     } else {
       wrapGetOrSet(inherits, key, descriptor, 'get');
@@ -361,7 +491,7 @@ var Class = Class || (function (Object) {
       current = interfaces[i];
       for (key in current) {
         if (hOP.call(current, key) && !hOP.call(target, key)) {
-          warn(key + ' is not implemented');
+          warn(key.toString() + ' is not implemented');
         }
       }
     }
@@ -466,7 +596,7 @@ var Class = Class || (function (Object) {
     if (hasParent && !getPrototypeOf) {
       define(prototype, PROTO, inherits, false);
     }
-    return constructor;
+    return defineProperty(constructor, 'isClass', isClassDescriptor);
   };
 
 }(Object));
