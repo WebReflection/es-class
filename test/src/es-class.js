@@ -12,6 +12,7 @@ var Class = Class || (function (Object) {
     PROTOTYPE = 'prototype',
     STATIC = 'static',
     SUPER = 'super',
+    TO_STRING = 'toString',
     VALUE = 'value',
     WITH = 'with',
 
@@ -25,28 +26,30 @@ var Class = Class || (function (Object) {
       'isPrototypeOf',
       'propertyIsEnumerable',
       'toLocaleString',
-      'toString',
+      TO_STRING,
       'valueOf'
     ],
 
+    // common shortcuts
+    ObjectPrototype = Object[PROTOTYPE],
+    hOP = ObjectPrototype[nonEnumerables[0]],
+    toString = ObjectPrototype[TO_STRING],
+
     // Espruino 1.7x does not have (yet) Object.prototype.propertyIsEnumerable
-    propertyIsEnumerable = {}[nonEnumerables[2]] || function (p) {
-      for (var k in this) if (p === k) return this.hasOwnProperty(p);
+    propertyIsEnumerable = ObjectPrototype[nonEnumerables[2]] || function (p) {
+      for (var k in this) if (p === k) return hOP.call(this, p);
       return false;
     },
 
     // IE < 9 bug only
-    hasIEEnumerableBug = !propertyIsEnumerable.call({valueOf:0}, nonEnumerables[5]),
-
-    // shortcut for own properties
-    hOP = Object[nonEnumerables[0]],
+    hasIEEnumerableBug = !propertyIsEnumerable.call({toString: 0}, TO_STRING),
 
     // basic ad-hoc private fallback for old browsers
     // use es5-shim if you want a properly patched polyfill
     create = Object.create || function (proto) {
       /*jshint newcap: false */
       var isInstance = this instanceof create;
-      create[PROTOTYPE] = isInstance ? createPrototype : proto;
+      create[PROTOTYPE] = isInstance ? createPrototype : (proto || ObjectPrototype);
       return isInstance ? this : new create();
     },
 
@@ -101,7 +104,7 @@ var Class = Class || (function (Object) {
 
     // used to filter mixin  Symbol
     isArray = Array.isArray || function (a) {
-      return Object[PROTOTYPE].toString.call(a) === '[object Array]';
+      return toString.call(a) === '[object Array]';
     },
 
     // used to avoid setting `arguments` and other function properties
@@ -190,7 +193,7 @@ var Class = Class || (function (Object) {
   }
 
   // copy all imported enumerable methods and properties
-  function addMixins(mixins, target, inherits) {
+  function addMixins(mixins, target, inherits, isNOTExtendingNative) {
     for (var
       source,
       init = [],
@@ -200,7 +203,7 @@ var Class = Class || (function (Object) {
       if (hOP.call(source, INIT)) {
         init.push(source[INIT]);
       }
-      copyOwn(source, target, inherits, false, false);
+      copyOwn(source, target, inherits, false, false, isNOTExtendingNative);
     }
     return init;
   }
@@ -266,7 +269,7 @@ var Class = Class || (function (Object) {
   }
 
   // configure source own properties in the target
-  function copyOwn(source, target, inherits, publicStatic, allowInit) {
+  function copyOwn(source, target, inherits, publicStatic, allowInit, isNOTExtendingNative) {
     for (var
       key,
       noFunctionCheck = typeof source !== 'function',
@@ -281,7 +284,7 @@ var Class = Class || (function (Object) {
         if (hOP.call(target, key)) {
           warn('duplicated: ' + key.toString());
         }
-        setProperty(inherits, target, key, gOPD(source, key), publicStatic);
+        setProperty(inherits, target, key, gOPD(source, key), publicStatic, isNOTExtendingNative);
       }
     }
   }
@@ -419,7 +422,7 @@ var Class = Class || (function (Object) {
   // set a property via defineProperty using a common descriptor
   // only if properties where not defined yet.
   // If publicStatic is true, properties are both non configurable and non writable
-  function setProperty(inherits, target, key, descriptor, publicStatic) {
+  function setProperty(inherits, target, key, descriptor, publicStatic, isNOTExtendingNative) {
     var
       hasValue = hOP.call(descriptor, VALUE),
       configurable,
@@ -445,7 +448,7 @@ var Class = Class || (function (Object) {
       if (typeof value === 'function' && trustSuper(value)) {
         descriptor[VALUE] = wrap(inherits, key, value, publicStatic);
       }
-    } else {
+    } else if (isNOTExtendingNative) {
       wrapGetOrSet(inherits, key, descriptor, 'get');
       wrapGetOrSet(inherits, key, descriptor, 'set');
     }
@@ -530,15 +533,17 @@ var Class = Class || (function (Object) {
         createConstructor(hasParentPrototype, parent),
       hasSuper = hasParent && hasConstructor && trustSuper(constructor),
       prototype = hasParent ? create(inherits) : constructor[PROTOTYPE],
+      // do not wrap getters and setters in GJS extends
+      isNOTExtendingNative = toString.call(inherits).indexOf(' GObject_') < 0,
       mixins,
       length
     ;
-    if (hasSuper) {
+    if (hasSuper && isNOTExtendingNative) {
       constructor = wrap(inherits, CONSTRUCTOR, constructor, false);
     }
     // add modules/mixins (that might swap the constructor)
     if (hOP.call(description, WITH)) {
-      mixins = addMixins([].concat(description[WITH]), prototype, inherits);
+      mixins = addMixins([].concat(description[WITH]), prototype, inherits, isNOTExtendingNative);
       length = mixins.length;
       if (length) {
         constructor = (function (parent) {
@@ -553,13 +558,13 @@ var Class = Class || (function (Object) {
     }
     if (hOP.call(description, STATIC)) {
       // add new public static properties first
-      copyOwn(description[STATIC], constructor, inherits, true, true);
+      copyOwn(description[STATIC], constructor, inherits, true, true, isNOTExtendingNative);
     }
     if (hasParent) {
       // in case it's a function
       if (parent !== inherits) {
         // copy possibly inherited statics too
-        copyOwn(parent, constructor, inherits, true, true);
+        copyOwn(parent, constructor, inherits, true, true, isNOTExtendingNative);
       }
       constructor[PROTOTYPE] = prototype;
     }
@@ -567,7 +572,7 @@ var Class = Class || (function (Object) {
       define(prototype, CONSTRUCTOR, constructor, false);
     }
     // enrich the prototype
-    copyOwn(description, prototype, inherits, false, true);
+    copyOwn(description, prototype, inherits, false, true, isNOTExtendingNative);
     if (hOP.call(description, IMPLEMENTS)) {
       verifyImplementations([].concat(description[IMPLEMENTS]), prototype);
     }
