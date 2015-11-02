@@ -49,7 +49,7 @@ var Class = Class || (function (Object) {
     create = Object.create || function (proto) {
       /*jshint newcap: false */
       var isInstance = this instanceof create;
-      create[PROTOTYPE] = isInstance ? createPrototype : proto;
+      create[PROTOTYPE] = isInstance ? createPrototype : (proto || ObjectPrototype);
       return isInstance ? this : new create();
     },
 
