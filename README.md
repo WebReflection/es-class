@@ -1,6 +1,13 @@
 es-class [![build status](https://secure.travis-ci.org/WebReflection/es-class.svg)](http://travis-ci.org/WebReflection/es-class)
 =================================
 
+## Don't miss [Classtrophobic](https://github.com/WebReflection/classtrophobic)!
+
+which is a natural evolution of this project.
+It provides bare minimal functionality to deal with native classes without haveing ever any transpiler on its way.
+
+- - - - -
+
 
 ### A future proof, backward compatible, JavaScript class utility.
 
