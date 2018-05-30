@@ -35,7 +35,7 @@
   "devDependencies": {
     "wru": "*",
     "tiny-cdn": "*",
-    "uglify-js": "1",
+    "uglify-js": "2",
     "jshint": "*",
     "markdown": "*"
   }

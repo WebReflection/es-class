@@ -120,6 +120,6 @@ dependencies:
 	mkdir node_modules
 	npm install wru
 	npm install tiny-cdn
-	npm install uglify-js@1
+	npm install uglify-js@2
 	npm install jshint
 	npm install markdown
