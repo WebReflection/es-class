@@ -33,10 +33,10 @@
     "test": "node test/.test.js"
   },
   "devDependencies": {
-    "wru": "*",
-    "tiny-cdn": "*",
-    "uglify-js": "2",
     "jshint": "*",
-    "markdown": "*"
+    "markdown": "*",
+    "tiny-cdn": "*",
+    "uglify-js": "^2.8.29",
+    "wru": "*"
   }
 }
